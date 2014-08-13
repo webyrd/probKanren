@@ -1,0 +1,4 @@
+probKanren
+==========
+
+Probabilistic miniKanren
