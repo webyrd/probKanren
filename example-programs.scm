@@ -6,15 +6,17 @@
 
 (run-with-distribution10 (uniform 0 1) (x) (flip x #t))
 
-(mh-query (define x (uniform 0 1))
-          (define q (flip x))
-          q
-          (eq x #t))
+(mh-query
+  (define x (uniform 0 1))
+  (define q (flip x))
+  q
+  (eq x #t))
           
-(mh-query (define x (uniform 0 1))
-          (define q (flip x))
-          x
-          (eq q #t))
+(mh-query
+  (define x (uniform 0 1))
+  (define q (flip x))
+  x
+  (eq q #t))
 
 (run-mh (uniform 0 1) (x)
   (fresh (q)
@@ -32,7 +34,6 @@
   (uniform 0 1 x))
 
 (run-mh (q)
-    (uniform 0 1 q)
-    (normal 0 1 q)
-    (== q -1))
-
+  (uniform 0 1 q)
+  (normal 0 1 q)
+  (== q -1))
