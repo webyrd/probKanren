@@ -173,7 +173,9 @@
                       (cons (reify x s) '())
                       (cons (cons (reify x s)
                                   (cons (list 'query-variable x)
-                                        (walk* u/f* s))) '()))))))
+                                        (cons (list 'subst s)
+                                              (walk* u/f* s))))
+                            '()))))))
           empty-c))))))
 
 (define-syntax run

@@ -11,6 +11,7 @@
     (uniform 0 1 x))
   '((_.0
      (query-variable #(x))
+     (subst ())
      (uniform 0 1 #(x) . #<procedure [char 5154 of mk.scm]>))))
 
 (test "run-mh-3"
@@ -21,5 +22,6 @@
     (uniform 0 1 x))
   '((_.0
      (query-variable #(x))
+     (subst ((#(b) . #t)))
      (uniform 0 1 #(x) . #<procedure [char 5154 of mk.scm]>)
      (flip #(x) #t . #<procedure [char 4866 of mk.scm]>))))
