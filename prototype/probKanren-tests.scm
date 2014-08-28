@@ -10,7 +10,8 @@
   (run-mh (x)
     (uniform 0 1 x))
   '((_.0
-     (uniform 0 1 #(x) . #<procedure [char 5096 of mk.scm]>))))
+     (query-variable #(x))
+     (uniform 0 1 #(x) . #<procedure [char 5154 of mk.scm]>))))
 
 (test "run-mh-3"
   (run-mh (x)
@@ -19,5 +20,6 @@
       (== b #t))
     (uniform 0 1 x))
   '((_.0
-     (uniform 0 1 #(x) . #<procedure [char 5096 of mk.scm]>)
-     (flip #(x) #(b) . #<procedure [char 4808 of mk.scm]>))))
+     (query-variable #(x))
+     (uniform 0 1 #(x) . #<procedure [char 5154 of mk.scm]>)
+     (flip #(x) #t . #<procedure [char 4866 of mk.scm]>))))

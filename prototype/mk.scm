@@ -169,8 +169,11 @@
                     (flip (get-flip c)))
                 (let ((u/f* (append uniform flip)))
                   (if (null? u/f*)
+                      
                       (cons (reify x s) '())
-                      (cons (cons (reify x s) u/f*) '()))))))
+                      (cons (cons (reify x s)
+                                  (cons (list 'query-variable x)
+                                        (walk* u/f* s))) '()))))))
           empty-c))))))
 
 (define-syntax run
