@@ -218,9 +218,17 @@
   (lambda (p)
     (> p (random 1.0))))
 
+(define flip-log-prob
+  (lambda (p x)
+    (log (if x p (- 1 p)))))
+
 (define uniform-sample
   (lambda (lo hi)
     (+ lo (random (- hi lo)))))
+
+(define uniform-log-prob
+  (lambda (lo hi x)
+     (log (/ 1 (- hi lo)))))
 
 (define flip
   (lambda (x b)
