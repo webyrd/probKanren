@@ -214,6 +214,14 @@
               (make-c s uniform flip)
               (mzero)))))))
 
+(define flip-sample
+  (lambda (p)
+    (> p (random 1.0))))
+
+(define uniform-sample
+  (lambda (lo hi)
+    (+ lo (random (- hi lo)))))
+
 (define flip
   (lambda (x b)
     (lambdag@ (c)
