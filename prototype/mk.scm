@@ -231,21 +231,21 @@
      (log (/ 1 (- hi lo)))))
 
 (define flip
-  (lambda (x b)
+  (lambda (p x)
     (lambdag@ (c)
       (let ((s (get-s c))
             (uniform (get-uniform c))
             (flip (get-flip c)))
-        (let ((flip (cons `(flip ,x ,b . ,(lambda (x) (flip-sample x))) flip)))
+        (let ((flip (cons `(flip ,p ,x . ,(lambda (p) (flip-sample p))) flip)))
           (make-c s uniform flip))))))
 
 (define uniform
-  (lambda (low high x)
+  (lambda (lo hi x)
     (lambdag@ (c)
       (let ((s (get-s c))
             (uniform (get-uniform c))
             (flip (get-flip c)))
-        (let ((uniform (cons `(uniform ,low ,high ,x . ,(lambda (low high) (uniform-sample low high))) uniform)))
+        (let ((uniform (cons `(uniform ,lo ,hi ,x . ,(lambda (lo hi) (uniform-sample lo hi))) uniform)))
           (make-c s uniform flip))))))
 
 (define expand-subs
