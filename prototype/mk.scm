@@ -248,6 +248,13 @@
         (let ((uniform (cons `(uniform ,low ,high ,x . ,(lambda (low high) (uniform-sample low high))) uniform)))
           (make-c s uniform flip))))))
 
+(define expand-subs
+  (lambda (subst cstore) #f))
+
+(define grounded?
+  (lambda (subst clause)
+    #f))
+
 (define-syntax fresh
   (syntax-rules ()
     ((_ (x ...) g0 g ...)
