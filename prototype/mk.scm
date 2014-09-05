@@ -211,7 +211,8 @@
             (flip (get-flip c)))
         (let ((s (unify u v s)))
           (if s
-              (make-c s uniform flip)
+              (let ((c (make-c s uniform flip)))
+                (solve-constraints-fixpoint c))
               (mzero)))))))
 
 (define flip-sample
@@ -237,7 +238,8 @@
             (uniform (get-uniform c))
             (flip (get-flip c)))
         (let ((flip (cons `(flip ,p ,x . ,(lambda (p) (flip-sample p))) flip)))
-          (make-c s uniform flip))))))
+          (let ((c (make-c s uniform flip)))
+            (solve-constraints-fixpoint c)))))))
 
 (define uniform
   (lambda (lo hi x)
@@ -246,14 +248,30 @@
             (uniform (get-uniform c))
             (flip (get-flip c)))
         (let ((uniform (cons `(uniform ,lo ,hi ,x . ,(lambda (lo hi) (uniform-sample lo hi))) uniform)))
-          (make-c s uniform flip))))))
+          (let ((c (make-c s uniform flip)))
+            (solve-constraints-fixpoint c)))))))
+
+(define solve-constraints-fixpoint
+  (lambda (c)
+    ;; constraint solving goes here
+    ;;
+    ;; (fixpoint algorithm)
+    c
+    ))
 
 (define expand-subs
   (lambda (subst cstore) #f))
 
 (define grounded?
-  (lambda (subst clause)
-    #f))
+  (lambda (v s)
+    (let ((v (walk v s)))
+      (cond
+        ((var? v) #f)
+        ((pair? v)
+         (and
+           (grounded? (car v) s)
+           (grounded? (cdr v) s)))
+        (else #t)))))
 
 (define-syntax fresh
   (syntax-rules ()
