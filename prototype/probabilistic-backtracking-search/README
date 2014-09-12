@@ -14,4 +14,6 @@ Should I recognize conde's with only one clause?  These really are just the conj
 
 What to do in case of true failure?  If I have an empty stream, then it is too late, correct?  Probably need to initiate backtracking upon unsuccessful unification (or other inconsistent constraint info), rather than returning (mzero).
 
+I wonder if the 2-continuation approach to backtracking makes more sense than streams in this model.  For now I think I'll stick with the stream model.
+
 --Will
