@@ -1,0 +1,15 @@
+Trying to implement probabilistic backtracking search, based on this conversation with Rob:
+
+[11 Sept 02014] Need to implement a version of miniKanren search in which 'conde' clause selection is probabilistically (with uniform probabilities between clauses of a conde), and in which failure/asking for another answer results in "probabilistic backtracking" (aka, re-sampling). This "probabilistic backtracking" works as follows: probabilistically choose one of the 'conde's tha was encountered during this program trace (with uniform probability), then run the program from that conde. It is okay if this approach results in a duplicate execution path.
+
+Current idea:  add to the constraint store a list of constraint-store/goal pairs (could actually represent this as a thunk) representing each conde encountered during the current execution path.  Invoking a saved goal with its associated constraint store will re-try the non-deterministic choice for that particular conde, which is equivalent to resampling at that level of the search tree.  This works since there is no "standard" (or inherited) backtracking in this version of the search, since each conde commits to a single clause.  This backtracking is initiated upon failure, or upon the desire to generate another answer (which we treat as the same thing in miniKanren).
+
+Chosing uniformly between the goals for backtracking will be trivial.  Will just need to build up the stream upon success, or replace the current stream with the backtracked stream upon failure.
+
+I think this means that even finite search trees containing only failure will always diverge, as long as they contain at least one conde.  Is this a problem?
+
+Within a conde, need to probabilistically select and commit to a clause with uniform probability.  Also, need to add the conde goal/constraint store pair to the "history list" in the new 'c'.
+
+Should I recognize conde's with only one clause?  These really are just the conjunction of the goals in the clause.  No reason to worry about this now---can be more clever later.
+
+--Will
