@@ -12,4 +12,6 @@ Within a conde, need to probabilistically select and commit to a clause with uni
 
 Should I recognize conde's with only one clause?  These really are just the conjunction of the goals in the clause.  No reason to worry about this now---can be more clever later.
 
+What to do in case of true failure?  If I have an empty stream, then it is too late, correct?  Probably need to initiate backtracking upon unsuccessful unification (or other inconsistent constraint info), rather than returning (mzero).
+
 --Will

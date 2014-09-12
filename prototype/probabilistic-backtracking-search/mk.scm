@@ -161,7 +161,7 @@
   (lambda (u v)
     (lambdag@ (s)
       (unify u v s))))
- 
+
 (define-syntax fresh
   (syntax-rules ()
     ((_ (x ...) g0 g ...)
@@ -169,12 +169,12 @@
        (inc
          (let ((x (var 'x)) ...)
            (bind* (g0 s) g ...)))))))
- 
+
 (define-syntax bind*
   (syntax-rules ()
     ((_ e) e)
     ((_ e g0 g ...) (bind* (bind e g0) g ...))))
- 
+
 (define bind
   (lambda (a-inf g)
     (case-inf a-inf
@@ -183,6 +183,7 @@
       ((a) (g a))
       ((a f) (mplus (g a) (lambdaf@ () (bind (f) g)))))))
 
+#|
 (define-syntax conde
   (syntax-rules ()
     ((_ (g0 g ...) (g1 g^ ...) ...)
@@ -191,12 +192,32 @@
          (mplus* 
            (bind* (g0 s) g ...)
            (bind* (g1 s) g^ ...) ...))))))
- 
+|#
+
+;; probabilistic conde
+(define-syntax conde
+  (syntax-rules ()
+    ((_ (g0 g ...) (g1 g^ ...) ...)
+     (lambdag@ (c)
+       (let ((cg (lambdag@ (c)
+                   (let ((pick (random (length (list g0 g1 ...)))))
+                     (list-ref
+                       (list
+                         (inc (bind* (g0 c) g ...))
+                         (inc (bind* (g1 c) g^ ...))
+                         ...)
+                       pick)))))
+         ;; save the c/cg so we can probabilistically backtrack later
+         (let ((c (ext-c/cg-list c cg)))
+           (cg c)))))))
+
+#|
 (define-syntax mplus*
   (syntax-rules ()
     ((_ e) e)
     ((_ e0 e ...) (mplus e0 
                     (lambdaf@ () (mplus* e ...))))))
+|#
  
 (define mplus
   (lambda (a-inf f)
