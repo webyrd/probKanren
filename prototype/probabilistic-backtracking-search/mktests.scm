@@ -55,15 +55,34 @@
   '(5 5 5 5 5))
 
 (test "5a"
-  (run 1 (q)
-    (conde
-      ((== q 5))
-      ((== q 6))))
-  '???)
+  (let ((val (run 1 (q)
+               (conde
+                 ((== q 5))
+                 ((== q 6))))))
+    (printf "val: ~s\n" val)
+    (and
+      (= (length val) 1)
+      (for-all (lambda (v) (or (= 5 v) (= 6 v))) val)))
+  #t)
 
 (test "5b"
-  (run 10 (q)
-    (conde
-      ((== q 5))
-      ((== q 6))))
-  '???)
+  (let ((val (run 10 (q)
+               (conde
+                 ((== q 5))
+                 ((== q 6))))))
+    (printf "val: ~s\n" val)
+    (and
+      (= (length val) 10)
+      (for-all (lambda (v) (or (= 5 v) (= 6 v))) val)))
+  #t)
+
+(test "5c"
+  (let ((val (run 100 (q)
+               (conde
+                 ((== q 5))
+                 ((== q 6))))))
+    (printf "val: ~s\n" val)
+    (and
+      (= (length val) 100)
+      (for-all (lambda (v) (or (= 5 v) (= 6 v))) val)))
+  #t)
