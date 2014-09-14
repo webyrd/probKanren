@@ -130,8 +130,10 @@
                    ((== y 3))
                    ((== y 4)))))))
     (printf "val: ~s\n" val)
-    val)
-  '???)
+    (not (not (and
+               (= (length val) 10)
+               (for-all (lambda (x/y) (let ((x (car x/y)) (y (cadr x/y))) (and (member x '(1 2)) (member y '(3 4))))) val)))))
+  #t)
 
 (test "9a"
   (let ((val (run 10 (q)
@@ -143,8 +145,10 @@
                     ((== q 3))
                     ((== q 4))))))))
     (printf "val: ~s\n" val)
-    val)
-  '???)
+    (not (not (and
+               (= (length val) 10)
+               (for-all (lambda (q) (member q '(1 2 3 4))) val)))))
+  #t)
 
 (test "10a"
   (let ((val (run 10 (q)
