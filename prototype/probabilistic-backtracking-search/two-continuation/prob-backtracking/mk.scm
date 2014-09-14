@@ -223,7 +223,7 @@
 
 
 
-(trace-define retry
+(define retry
   (lambda (fk c)
     (let ((sk/c-ls (get-sk/c-ls c)))
       (if (null? sk/c-ls)
@@ -261,11 +261,25 @@
     [(_ ne (x) g g* ...)
      (let ((n ne)
            (x (var 'x)))
-       ((fresh () g g* ...)
-        (lambda (fk c)
-          (cons (reify x (get-s c)) (fk)))
-        (lambda () '())
-        empty-c))]))
+       (let ((ans ((fresh () g g* ...)
+                   (lambda (fk c)
+                     (list fk c))
+                   (lambda () '())
+                   empty-c)))
+         (let loop ((n n)
+                    (ans ans)
+                    (ls '()))
+           (cond
+             ((zero? n) (reverse ls))
+             ((null? ans) (reverse ls))
+             (else
+              (let ((fk (car ans))
+                    (c (cadr ans)))
+                (let ((s (get-s c)))
+                  (loop
+                    (sub1 n)
+                    (retry fk c)
+                    (cons (reify x s) ls)))))))))]))
 
 
 
