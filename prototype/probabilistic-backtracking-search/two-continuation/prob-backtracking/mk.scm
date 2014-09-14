@@ -20,6 +20,22 @@
 
 
 (define empty-s '())
+(define empty-k/c-ls '())
+(define empty-c `(,empty-s ,empty-k/c-ls))
+
+(define get-s
+  (lambda (c)
+    (car c)))
+
+(define get-k/c-ls
+  (lambda (c)
+    (cadr c)))
+
+(define update-s
+  (lambda (s c)
+    (let ((k/c-ls (get-k/c-ls c)))
+      `(,s ,k/c-ls))))
+
 
 (define ext-s
   (lambda (x v s)
@@ -84,23 +100,25 @@
 
 (define ==
   (lambda (u v)
-    (lambda (sk fk s)
-      (let ((s (unify u v s)))
-        (if s
-            (sk fk s)
-            (fk))))))
+    (lambda (sk fk c)
+      (let ((s (get-s c)))
+        (let ((s (unify u v s)))
+          (if s
+              (let ((c (update-s s c)))
+                (sk fk c))
+              (fk)))))))
 
 
 
 (define disj
   (lambda (g1 g2)
-    (lambda (sk fk s)
-      (g1 sk (lambda () (g2 sk fk s)) s))))
+    (lambda (sk fk c)
+      (g1 sk (lambda () (g2 sk fk c)) c))))
 
 (define conj
   (lambda (g1 g2)
-    (lambda (sk fk s)
-      (g1 (lambda (fk^ s^) (g2 sk fk^ s^)) fk s))))
+    (lambda (sk fk c)
+      (g1 (lambda (fk^ c^) (g2 sk fk^ c^)) fk c))))
 
 
 
@@ -140,9 +158,10 @@
     [(_ (x) g g* ...)
      (let ((x (var 'x)))
        ((fresh () g g* ...)
-        (lambda (fk s) (cons (reify x s) (fk)))
+        (lambda (fk c)
+          (cons (reify x (get-s c)) (fk)))
         (lambda () '())
-        empty-s))]))
+        empty-c))]))
 
 
 (define reify-s
@@ -166,9 +185,9 @@
       (walk* v (reify-s v empty-s)))))
 
 (define succeed
-  (lambda (sk fk s)
-    (sk fk s)))
+  (lambda (sk fk c)
+    (sk fk c)))
 
 (define fail
-  (lambda (sk fk s)
+  (lambda (sk fk c)
     (fk)))
