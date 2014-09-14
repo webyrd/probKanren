@@ -90,6 +90,14 @@
             (sk fk s)
             (fk))))))
 
+;; run
+;; run*
+
+;; disj
+;; conj
+
+;; fresh
+;; conde
 
 (define reify-s
   (lambda (v s)
