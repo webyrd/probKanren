@@ -20,21 +20,27 @@
 
 
 (define empty-s '())
-(define empty-k/c-ls '())
-(define empty-c `(,empty-s ,empty-k/c-ls))
+(define empty-sk/c-ls '())
+(define empty-c `(,empty-s ,empty-sk/c-ls))
 
 (define get-s
   (lambda (c)
     (car c)))
 
-(define get-k/c-ls
+(define get-sk/c-ls
   (lambda (c)
     (cadr c)))
 
+(define ext-sk/c-ls
+  (lambda (sk c)
+    (let ((s (get-s c))
+          (sk/c-ls (get-sk/c-ls c)))
+      `(,s ((,sk ,c) . ,sk/c-ls)))))
+
 (define update-s
   (lambda (s c)
-    (let ((k/c-ls (get-k/c-ls c)))
-      `(,s ,k/c-ls))))
+    (let ((sk/c-ls (get-sk/c-ls c)))
+      `(,s ,sk/c-ls))))
 
 
 (define ext-s
@@ -98,6 +104,7 @@
         (else #f)))))
 
 
+#|
 (define ==
   (lambda (u v)
     (lambda (sk fk c)
@@ -107,7 +114,17 @@
               (let ((c (update-s s c)))
                 (sk fk c))
               (fk)))))))
+|#
 
+(define ==
+  (lambda (u v)
+    (lambda (sk fk c)
+      (let ((s (get-s c)))
+        (let ((s (unify u v s)))
+          (if s
+              (let ((c (update-s s c)))
+                (sk fk c))
+              (fk c)))))))
 
 #|
 (define disj
@@ -164,14 +181,15 @@
   (syntax-rules ()
     [(_ (g0 g0* ...) (g* g** ...) ...)
      (lambda (sk fk c)
-       (let ((g-ls (list (conj* g0 g0* ...)
-                         (conj* g* g** ...)
-                         ...)))
-         (let ((pick (random (length g-ls))))
-           (let ((g (list-ref g-ls pick)))
-             (g sk fk c)))))]))
+       (let ((c (ext-sk/c-ls sk c)))
+         (let ((g-ls (list (conj* g0 g0* ...)
+                           (conj* g* g** ...)
+                           ...)))
+           (let ((pick (random (length g-ls))))
+             (let ((g (list-ref g-ls pick)))
+               (g sk fk c))))))]))
 
-
+#|
 (define-syntax run*
   (syntax-rules ()
     [(_ (x) g g* ...)
@@ -180,6 +198,17 @@
         (lambda (fk c)
           (cons (reify x (get-s c)) (fk)))
         (lambda () '())
+        empty-c))]))
+|#
+
+(define-syntax run*
+  (syntax-rules ()
+    [(_ (x) g g* ...)
+     (let ((x (var 'x)))
+       ((fresh () g g* ...)
+        (lambda (fk c)
+          (cons (reify x (get-s c)) (fk c)))
+        (lambda (c) '())
         empty-c))]))
 
 
@@ -207,6 +236,12 @@
   (lambda (sk fk c)
     (sk fk c)))
 
+#|
 (define fail
   (lambda (sk fk c)
     (fk)))
+|#
+
+(define fail
+  (lambda (sk fk c)
+    (fk c)))
