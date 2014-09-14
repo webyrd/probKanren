@@ -137,14 +137,15 @@
 
 ;; run
 
-;; run*
+
 (define-syntax run*
   (syntax-rules ()
     [(_ (x) g g* ...)
-     ((fresh (x) g g* ...)
-      (lambda (fk s) (cons s (fk)))
-      (lambda () '())
-      empty-s)]))
+     (let ((x (var 'x)))
+       ((fresh () g g* ...)
+        (lambda (fk s) (cons (reify x s) (fk)))
+        (lambda () '())
+        empty-s))]))
 
 
 (define reify-s
