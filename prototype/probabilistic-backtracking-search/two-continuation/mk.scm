@@ -94,7 +94,15 @@
 ;; run*
 
 ;; disj
+(define disj
+  (lambda (g1 g2)
+    '???))
+
 ;; conj
+(define conj
+  (lambda (g1 g2)
+    '???))
+
 
 ;; fresh
 ;; conde
