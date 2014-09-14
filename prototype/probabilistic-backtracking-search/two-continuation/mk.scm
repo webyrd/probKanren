@@ -90,10 +90,6 @@
             (sk fk s)
             (fk))))))
 
-;; run
-;; run*
-
-
 
 (define disj
   (lambda (g1 g2)
@@ -122,11 +118,20 @@
       (else (conj (car g*) (conj* (cdr g*)))))))
 
 
-
 ;; fresh
-
+(define-syntax fresh
+  (syntax-rules ()
+    [(_ (x* ...) g g* ...)
+     (let ((x* (var 'x*))
+           ...)
+       (conj* (list g g* ...)))]))
 
 ;; conde
+
+
+;; run
+;; run*
+
 
 (define reify-s
   (lambda (v s)
