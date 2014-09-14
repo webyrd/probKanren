@@ -98,7 +98,7 @@
 (define disj
   (lambda (g1 g2)
     (lambda (sk fk s)
-      '???)))
+      (g1 sk (lambda () (g2 sk fk s)) s))))
 
 ;; conj
 (define conj
