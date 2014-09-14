@@ -298,3 +298,18 @@
      (= (length val) 20)
      (not (not (for-all (lambda (q) (member q '(1 2))) val)))))
   #t)
+
+(define geom 
+  (lambda (x n)
+    (conde
+      ((== n x))
+      ((geom x (add1 n))))))
+
+(test "16a"
+  (let ((val (run 50 (q)
+               (geom q 0))))
+    (printf "val: ~s\n" val)
+    (and
+     (= (length val) 50)
+     (for-all (lambda (q) (and (integer? q) (>= q 0))) val)))
+  #t)
