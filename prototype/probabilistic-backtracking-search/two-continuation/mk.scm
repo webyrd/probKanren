@@ -104,8 +104,8 @@
 
 
 
-(define disj (lambda args (disj*-aux args)))
-(define conj (lambda args (conj*-aux args)))
+(define disj* (lambda args (disj*-aux args)))
+(define conj* (lambda args (conj*-aux args)))
 
 (define disj*-aux
   (lambda (g*)
@@ -134,8 +134,17 @@
     [(_ (g0 g0* ...) (g* g** ...) ...)
      (disj* (conj* g0 g0* ...) (conj* g* g** ...) ...)]))
 
+
 ;; run
+
 ;; run*
+(define-syntax run*
+  (syntax-rules ()
+    [(_ (x) g g* ...)
+     ((fresh (x) g g* ...)
+      (lambda (fk s) (cons s (fk)))
+      (lambda () '())
+      empty-s)]))
 
 
 (define reify-s
