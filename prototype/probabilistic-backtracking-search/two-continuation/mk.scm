@@ -135,10 +135,6 @@
      (disj* (conj* g0 g0* ...) (conj* g* g** ...) ...)]))
 
 
-
-;; run
-
-
 (define-syntax run*
   (syntax-rules ()
     [(_ (x) g g* ...)
