@@ -283,3 +283,18 @@
      (= (length val) 20)
      (not (not (for-all (lambda (q) (member q '(1 2 3 4 5 6))) val)))))
   #t)
+
+(define one-or-two
+  (lambda (x)
+    (conde
+      ((== 1 x))
+      ((== 2 x)))))
+
+(test "15a"
+  (let ((val (run 20 (q)
+               (one-or-two q))))
+    (printf "val: ~s\n" val)
+    (and
+     (= (length val) 20)
+     (not (not (for-all (lambda (q) (member q '(1 2))) val)))))
+  #t)
