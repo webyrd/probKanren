@@ -158,5 +158,7 @@
                    ((== x 1))
                    ((== x 2)))))))
     (printf "val: ~s\n" val)
-    val)
-  '???)
+    (not (not (and
+               (= (length val) 10)
+               (for-all (lambda (q) (member q '(1 2))) val)))))
+  #t)
