@@ -233,3 +233,53 @@
                (= (length val) 50)
                (for-all (lambda (q) (member q '(1 2 3 4 5 6 7 8))) val)))))
   #t)
+
+(test "12a"
+  (let ((val (run 20 (q)
+               (conde
+                 ((== q 1))
+                 ((== q 2))
+                 ((== q 3))
+                 ((== q 4))
+                 ((== q 5))
+                 ((== q 6))))))
+    (printf "val: ~s\n" val)
+    (and
+      (= (length val) 20)
+      (not (not (for-all (lambda (q) (member q '(1 2 3 4 5 6))) val)))))
+  #t)
+
+(test "13a"
+  (let ((val (run 20 (q)
+               (conde
+                 ((conde
+                    ((== q 1))
+                    ((== q 2))
+                    ((== q 3))))
+                 ((conde
+                    ((== q 4))
+                    ((== q 5))
+                    ((== q 6))))))))
+    (printf "val: ~s\n" val)
+    (and
+     (= (length val) 20)
+     (not (not (for-all (lambda (q) (member q '(1 2 3 4 5 6))) val)))))
+  #t)
+
+(test "14a"
+  (let ((val (run 20 (q)
+               (conde
+                 ((conde
+                    ((== q 1))
+                    ((== q 2))))
+                 ((conde                    
+                    ((== q 3))
+                    ((== q 4))))
+                 ((conde                    
+                    ((== q 5))
+                    ((== q 6))))))))
+    (printf "val: ~s\n" val)
+    (and
+     (= (length val) 20)
+     (not (not (for-all (lambda (q) (member q '(1 2 3 4 5 6))) val)))))
+  #t)
