@@ -86,3 +86,64 @@
       (= (length val) 100)
       (for-all (lambda (v) (or (= 5 v) (= 6 v))) val)))
   #t)
+
+(test "9a"
+  (let ((val (run 10 (q)
+               (conde
+                 ((conde
+                    ((== q 1))
+                    ((== q 2))))
+                 ((conde
+                    ((== q 3))
+                    ((== q 4))))))))
+    val)
+  '???)
+
+(test "6a"
+  (let ((val (run 10 (q)
+               (fresh (x y)
+                 (conde
+                   ((== x 1))
+                   ((== x 2)))
+                 (conde
+                   ((== y 3))
+                   ((== y 4)))
+                 (== (list x y) q)))))
+    val)
+  '???)
+
+(test "7a"
+  (let ((val (run 10 (q)
+               (fresh (x y)
+                 (conde
+                   ((== x 1))
+                   ((== x 2)))
+                 (== (list x y) q)
+                 (conde
+                   ((== y 3))
+                   ((== y 4)))))))
+    val)
+  '???)
+
+(test "8a"
+  (let ((val (run 10 (q)
+               (fresh (x y)
+                 (== (list x y) q)
+                 (conde
+                   ((== x 1))
+                   ((== x 2)))
+                 (conde
+                   ((== y 3))
+                   ((== y 4)))))))
+    val)
+  '???)
+
+(test "10a"
+  (let ((val (run 10 (q)
+               (fresh (x)
+                 (== x q)
+                 (conde
+                   ((== x 1))
+                   ((== x 2)))))))
+    val)
+  '???)

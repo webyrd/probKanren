@@ -70,7 +70,7 @@
 
 (define empty-goal/c-ls '())
 
-(define get-goal/c-ls
+(define get-g/c-ls
   (lambda (c)
     (cadr c)))
 
@@ -81,25 +81,33 @@
 
 (define update-s
   (lambda (c s)
-    (let ((goal/c-ls (get-goal/c-ls c)))
-      `(,s ,goal/c-ls))))
+    (let ((g/c-ls (get-g/c-ls c)))
+      `(,s ,g/c-ls))))
 
+#|
 (define ext-g/c-list
   (lambda (cg c)
     (let ((goal/c-ls (get-goal/c-ls c))
           (s (get-s c)))
       `(,s ((,cg . ,c) . ,goal/c-ls)))))
+|#
+
+(define ext-g/c-list
+  (lambda (g c)
+    (let ((g/c-ls (get-g/c-ls c))
+          (s (get-s c)))
+      `(,s ((,g . ,c) . ,g/c-ls)))))
 
 
 
 (define resample
   (lambda (c)
     #;(printf "c: ~s\n" c)
-    (let ((goal/c-ls (get-goal/c-ls c)))
-      (if (null? goal/c-ls)
+    (let ((g/c-ls (get-g/c-ls c)))
+      (if (null? g/c-ls)
           (mzero)
-          (let ((pick (random (length goal/c-ls))))
-            (let ((g/c (list-ref goal/c-ls pick)))
+          (let ((pick (random (length g/c-ls))))
+            (let ((g/c (list-ref g/c-ls pick)))
               (let ((g (car g/c))
                     (c (cdr g/c)))
                 #;(printf "g: ~s\n" g)
@@ -358,10 +366,11 @@
                          (inc (bind* (g1 c) g^ ...))
                          ...)
                        pick)))))
-         ;; save the cg/g so we can probabilistically backtrack later
+         ;; save the cg/c so we can probabilistically backtrack later
          (let ((c (ext-g/c-list cg c)))
            (cg c)))))))
 |#
+
 
 ;; probabilistic conde
 (define-syntax conde
@@ -369,7 +378,7 @@
     ((_ (g0 g ...) (g1 g^ ...) ...)
      (lambdag@ (c)
        (letrec ((cg (lambdag@ (c)
-                      ;; save the cg/g so we can probabilistically backtrack later
+                      ;; save the cg/c so we can probabilistically backtrack later
                       (let ((c (ext-g/c-list cg c)))
                         (let ((pick (random (length (list g0 g1 ...)))))
                           (list-ref
@@ -379,6 +388,7 @@
                               ...)
                             pick))))))
          (cg c))))))
+
 
 #|
 (define-syntax mplus*
