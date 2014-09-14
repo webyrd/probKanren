@@ -122,9 +122,8 @@
       (let ((s (get-s c)))
         (let ((s (unify u v s)))
           (if s
-              (let ((c (update-s s c)))
-                (sk fk c))
-              (fk)))))))
+              (sk fk (update-s s c))
+              (retry fk c)))))))
 
 #|
 (define disj
@@ -177,6 +176,7 @@
      (disj* (conj* g0 g0* ...) (conj* g* g** ...) ...)]))
 |#
 
+#|
 (define-syntax conde
   (syntax-rules ()
     [(_ (g0 g0* ...) (g* g** ...) ...)
@@ -188,6 +188,51 @@
            (let ((pick (random (length g-ls))))
              (let ((g (list-ref g-ls pick)))
                (g sk fk c))))))]))
+|#
+
+#|
+(define-syntax conde
+  (syntax-rules ()
+    [(_ (g0 g0* ...) (g* g** ...) ...)
+     (lambda (sk fk c)
+       (let ((sk (lambda (fk^ c^)
+                   (let ((g-ls (list (conj* g0 g0* ...)
+                                     (conj* g* g** ...)
+                                     ...)))
+                     (let ((pick (random (length g-ls))))
+                       (let ((g (list-ref g-ls pick)))
+                         (g sk fk^ c^)))))))
+         (let ((c (ext-sk/c-ls sk c)))
+           (sk fk c))))]))
+|#
+
+(define-syntax conde
+  (syntax-rules ()
+    [(_ (g0 g0* ...) (g* g** ...) ...)
+     (lambda (sk fk c)
+       (letrec ((sk^ (lambda (fk^ c^)
+                       (let ((g-ls (list (conj* g0 g0* ...)
+                                         (conj* g* g** ...)
+                                         ...)))
+                         (let ((pick (random (length g-ls))))
+                           (let ((g (list-ref g-ls pick)))
+                             (let ((c^ (ext-sk/c-ls sk^ c^)))
+                               (g sk fk^ c^))))))))
+         (sk^ fk c)))]))
+
+
+
+
+(trace-define retry
+  (lambda (fk c)
+    (let ((sk/c-ls (get-sk/c-ls c)))
+      (if (null? sk/c-ls)
+          (fk)
+          (let ((pick (random (length sk/c-ls))))
+            (let ((sk/c (list-ref sk/c-ls pick)))
+              (let ((sk (car sk/c))
+                    (c (cadr sk/c)))
+                (sk fk c))))))))
 
 #|
 (define-syntax run*
