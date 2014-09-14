@@ -93,15 +93,18 @@
 ;; run
 ;; run*
 
+
 ;; disj
 (define disj
   (lambda (g1 g2)
-    '???))
+    (lambda (sk fk s)
+      '???)))
 
 ;; conj
 (define conj
   (lambda (g1 g2)
-    '???))
+    (lambda (sk fk s)
+      '???)))
 
 
 ;; fresh
