@@ -65,7 +65,7 @@
 
 
 
-(trace-define unify
+(define unify
   (lambda (u v s)
     (let ((u (walk u s))
           (v (walk v s)))
@@ -89,6 +89,7 @@
         (if s
             (sk fk s)
             (fk))))))
+
 
 
 (define disj
