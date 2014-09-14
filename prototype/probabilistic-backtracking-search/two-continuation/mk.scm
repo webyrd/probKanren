@@ -94,17 +94,33 @@
 ;; run*
 
 
-;; disj
+
 (define disj
   (lambda (g1 g2)
     (lambda (sk fk s)
       (g1 sk (lambda () (g2 sk fk s)) s))))
 
-;; conj
 (define conj
   (lambda (g1 g2)
     (lambda (sk fk s)
       (g1 (lambda (fk^ s^) (g2 sk fk^ s^)) fk s))))
+
+
+
+(define disj*
+  (lambda (g*)
+    (cond
+      ((null? g*) fail)
+      ((null? (cdr g*)) (car g*))
+      (else (disj (car g*) (disj* (cdr g*)))))))
+
+(define conj*
+  (lambda (g*)
+    (cond
+      ((null? g*) succeed)
+      ((null? (cdr g*)) (car g*))
+      (else (conj (car g*) (conj* (cdr g*)))))))
+
 
 
 ;; fresh
