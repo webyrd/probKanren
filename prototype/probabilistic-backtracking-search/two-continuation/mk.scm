@@ -65,7 +65,7 @@
 
 
 
-(define unify
+(trace-define unify
   (lambda (u v s)
     (let ((u (walk u s))
           (v (walk v s)))
@@ -104,10 +104,12 @@
 (define conj
   (lambda (g1 g2)
     (lambda (sk fk s)
-      (g1 (lambda (sk^ fk^ s^) (g2 sk^ fk^ s^)) fk s))))
+      (g1 (lambda (fk^ s^) (g2 sk fk^ s^)) fk s))))
 
 
 ;; fresh
+
+
 ;; conde
 
 (define reify-s
