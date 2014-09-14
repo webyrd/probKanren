@@ -118,7 +118,7 @@
       (else (conj (car g*) (conj* (cdr g*)))))))
 
 
-;; fresh
+
 (define-syntax fresh
   (syntax-rules ()
     [(_ (x* ...) g g* ...)
