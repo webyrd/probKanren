@@ -109,11 +109,12 @@
               (fk)))))))
 
 
-
+#|
 (define disj
   (lambda (g1 g2)
     (lambda (sk fk c)
       (g1 sk (lambda () (g2 sk fk c)) c))))
+|#
 
 (define conj
   (lambda (g1 g2)
@@ -121,16 +122,20 @@
       (g1 (lambda (fk^ c^) (g2 sk fk^ c^)) fk c))))
 
 
-
+#|
 (define disj* (lambda args (disj*-aux args)))
+|#
+
 (define conj* (lambda args (conj*-aux args)))
 
+#|
 (define disj*-aux
   (lambda (g*)
     (cond
       ((null? g*) fail)
       ((null? (cdr g*)) (car g*))
       (else (disj (car g*) (disj*-aux (cdr g*)))))))
+|#
 
 (define conj*-aux
   (lambda (g*)
@@ -147,10 +152,24 @@
      (let ((x* (var 'x*)) ...)
        (conj* g g* ...))]))
 
+
+#|
 (define-syntax conde
   (syntax-rules ()
     [(_ (g0 g0* ...) (g* g** ...) ...)
      (disj* (conj* g0 g0* ...) (conj* g* g** ...) ...)]))
+|#
+
+(define-syntax conde
+  (syntax-rules ()
+    [(_ (g0 g0* ...) (g* g** ...) ...)
+     (lambda (sk fk c)
+       (let ((g-ls (list (conj* g0 g0* ...)
+                         (conj* g* g** ...)
+                         ...)))
+         (let ((pick (random (length g-ls))))
+           (let ((g (list-ref g-ls pick)))
+             (g sk fk c)))))]))
 
 
 (define-syntax run*
