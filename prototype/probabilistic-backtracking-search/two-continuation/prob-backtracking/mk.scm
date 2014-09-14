@@ -124,7 +124,7 @@
           (if s
               (let ((c (update-s s c)))
                 (sk fk c))
-              (fk c)))))))
+              (fk)))))))
 
 #|
 (define disj
@@ -207,9 +207,21 @@
      (let ((x (var 'x)))
        ((fresh () g g* ...)
         (lambda (fk c)
-          (cons (reify x (get-s c)) (fk c)))
-        (lambda (c) '())
+          (cons (reify x (get-s c)) (fk)))
+        (lambda () '())
         empty-c))]))
+
+(define-syntax run
+  (syntax-rules ()
+    [(_ ne (x) g g* ...)
+     (let ((n ne)
+           (x (var 'x)))
+       ((fresh () g g* ...)
+        (lambda (fk c)
+          (cons (reify x (get-s c)) (fk)))
+        (lambda () '())
+        empty-c))]))
+
 
 
 (define reify-s
@@ -244,4 +256,4 @@
 
 (define fail
   (lambda (sk fk c)
-    (fk c)))
+    (fk)))
