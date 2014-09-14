@@ -104,7 +104,7 @@
 (define conj
   (lambda (g1 g2)
     (lambda (sk fk s)
-      '???)))
+      (g1 (lambda (sk^ fk^ s^) (g2 sk^ fk^ s^)) fk s))))
 
 
 ;; fresh
