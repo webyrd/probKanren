@@ -87,18 +87,6 @@
       (for-all (lambda (v) (or (= 5 v) (= 6 v))) val)))
   #t)
 
-(test "9a"
-  (let ((val (run 10 (q)
-               (conde
-                 ((conde
-                    ((== q 1))
-                    ((== q 2))))
-                 ((conde
-                    ((== q 3))
-                    ((== q 4))))))))
-    val)
-  '???)
-
 (test "6a"
   (let ((val (run 10 (q)
                (fresh (x y)
@@ -109,8 +97,11 @@
                    ((== y 3))
                    ((== y 4)))
                  (== (list x y) q)))))
-    val)
-  '???)
+    (printf "val: ~s\n" val)
+    (not (not (and
+               (= (length val) 10)
+               (for-all (lambda (x/y) (let ((x (car x/y)) (y (cadr x/y))) (and (member x '(1 2)) (member y '(3 4))))) val)))))
+  #t)
 
 (test "7a"
   (let ((val (run 10 (q)
@@ -122,6 +113,7 @@
                  (conde
                    ((== y 3))
                    ((== y 4)))))))
+    (printf "val: ~s\n" val)
     val)
   '???)
 
@@ -135,6 +127,20 @@
                  (conde
                    ((== y 3))
                    ((== y 4)))))))
+    (printf "val: ~s\n" val)
+    val)
+  '???)
+
+(test "9a"
+  (let ((val (run 10 (q)
+               (conde
+                 ((conde
+                    ((== q 1))
+                    ((== q 2))))
+                 ((conde
+                    ((== q 3))
+                    ((== q 4))))))))
+    (printf "val: ~s\n" val)
     val)
   '???)
 
@@ -145,5 +151,6 @@
                  (conde
                    ((== x 1))
                    ((== x 2)))))))
+    (printf "val: ~s\n" val)
     val)
   '???)
