@@ -103,6 +103,54 @@
                (for-all (lambda (x/y) (let ((x (car x/y)) (y (cadr x/y))) (and (member x '(1 2)) (member y '(3 4))))) val)))))
   #t)
 
+(test "6b"
+  (let ((val (run 10 (q)
+               (fresh (x y)
+                 (conde
+                   ((== x 1))
+                   ((== x 2)))
+                 (== (list x y) q)
+                 (conde
+                   ((== y 3))
+                   ((== y 4)))))))
+    (printf "val: ~s\n" val)
+    (not (not (and
+               (= (length val) 10)
+               (for-all (lambda (x/y) (let ((x (car x/y)) (y (cadr x/y))) (and (member x '(1 2)) (member y '(3 4))))) val)))))
+  #t)
+
+(test "6c"
+  (let ((val (run 10 (q)
+               (fresh (x y)
+                 (== (list x y) q)
+                 (conde
+                   ((== x 1))
+                   ((== x 2)))
+                 (conde
+                   ((== y 3))
+                   ((== y 4)))))))
+    (printf "val: ~s\n" val)
+    (not (not (and
+               (= (length val) 10)
+               (for-all (lambda (x/y) (let ((x (car x/y)) (y (cadr x/y))) (and (member x '(1 2)) (member y '(3 4))))) val)))))
+  #t)
+
+(test "6d"
+  (let ((val (run 10 (q)
+               (fresh (x y)
+                 (== (list x y) q)
+                 (conde
+                   ((== y 3))
+                   ((== y 4)))
+                 (conde
+                   ((== x 1))
+                   ((== x 2)))))))
+    (printf "val: ~s\n" val)
+    (not (not (and
+               (= (length val) 10)
+               (for-all (lambda (x/y) (let ((x (car x/y)) (y (cadr x/y))) (and (member x '(1 2)) (member y '(3 4))))) val)))))
+  #t)
+
 (test "7a"
   (let ((val (run 10 (q)
                (fresh (x y)
