@@ -104,31 +104,35 @@
 
 
 
-(define disj*
+(define disj (lambda args (disj*-aux args)))
+(define conj (lambda args (conj*-aux args)))
+
+(define disj*-aux
   (lambda (g*)
     (cond
       ((null? g*) fail)
       ((null? (cdr g*)) (car g*))
-      (else (disj (car g*) (disj* (cdr g*)))))))
+      (else (disj (car g*) (disj*-aux (cdr g*)))))))
 
-(define conj*
+(define conj*-aux
   (lambda (g*)
     (cond
       ((null? g*) succeed)
       ((null? (cdr g*)) (car g*))
-      (else (conj (car g*) (conj* (cdr g*)))))))
+      (else (conj (car g*) (conj*-aux (cdr g*)))))))
 
 
 
 (define-syntax fresh
   (syntax-rules ()
     [(_ (x* ...) g g* ...)
-     (let ((x* (var 'x*))
-           ...)
-       (conj* (list g g* ...)))]))
+     (let ((x* (var 'x*)) ...)
+       (conj* g g* ...))]))
 
-;; conde
-
+(define-syntax conde
+  (syntax-rules ()
+    [(_ (g0 g0* ...) (g* g** ...) ...)
+     (disj* (conj* g0 g0* ...) (conj* g* g** ...) ...)]))
 
 ;; run
 ;; run*
