@@ -210,3 +210,26 @@
                (= (length val) 10)
                (for-all (lambda (q) (member q '(1 2))) val)))))
   #t)
+
+(test "11a"
+  (let ((val (run 50 (q)
+               (conde
+                 ((conde
+                    ((conde
+                       ((== q 1))
+                       ((== q 2))))
+                    ((conde
+                       ((== q 3))
+                       ((== q 4))))))
+                 ((conde
+                    ((conde
+                       ((== q 5))
+                       ((== q 6))))
+                    ((conde
+                       ((== q 7))
+                       ((== q 8))))))))))
+    (printf "val: ~s\n" val)
+    (not (not (and
+               (= (length val) 50)
+               (for-all (lambda (q) (member q '(1 2 3 4 5 6 7 8))) val)))))
+  #t)
