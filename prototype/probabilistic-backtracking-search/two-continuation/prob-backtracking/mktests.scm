@@ -1,6 +1,9 @@
 (load "mk.scm")
 (load "test-check.scm")
 
+;; Example run can be found in comments for the non-deterministic
+;; tests below
+
 (test "1a"
   (run 1 (q) (== q 5))
   '(5))
@@ -64,6 +67,7 @@
       (= (length val) 1)
       (for-all (lambda (v) (or (= 5 v) (= 6 v))) val)))
   #t)
+;; val: (5)
 
 (test "5b"
   (let ((val (run 10 (q)
@@ -75,6 +79,7 @@
       (= (length val) 10)
       (for-all (lambda (v) (or (= 5 v) (= 6 v))) val)))
   #t)
+;; val: (5 6 6 5 6 6 5 5 5 5)
 
 (test "5c"
   (let ((val (run 100 (q)
@@ -86,6 +91,7 @@
       (= (length val) 100)
       (for-all (lambda (v) (or (= 5 v) (= 6 v))) val)))
   #t)
+;; val: (5 6 6 5 6 6 6 5 5 6 6 5 6 6 6 5 6 5 6 6 6 5 6 6 5 5 6 6 5 6 6 5 5 6 5 6 5 5 6 5 5 5 5 6 5 6 5 6 5 5 5 5 6 5 6 6 6 6 5 5 5 6 6 5 5 5 5 5 5 6 6 5 6 6 5 6 6 5 6 6 6 5 6 5 5 6 5 6 6 5 5 5 6 5 6 6 5 6 6 5)
 
 (test "6a"
   (let ((val (run 10 (q)
@@ -102,6 +108,7 @@
                (= (length val) 10)
                (for-all (lambda (x/y) (let ((x (car x/y)) (y (cadr x/y))) (and (member x '(1 2)) (member y '(3 4))))) val)))))
   #t)
+;; val: ((2 3) (2 4) (2 4) (2 3) (2 4) (2 3) (2 4) (2 4) (2 4) (2 3))
 
 (test "6b"
   (let ((val (run 10 (q)
@@ -118,6 +125,7 @@
                (= (length val) 10)
                (for-all (lambda (x/y) (let ((x (car x/y)) (y (cadr x/y))) (and (member x '(1 2)) (member y '(3 4))))) val)))))
   #t)
+;; val: ((1 3) (1 3) (1 4) (2 4) (2 3) (2 3) (2 4) (2 4) (1 4) (1 3))
 
 (test "6c"
   (let ((val (run 10 (q)
@@ -134,6 +142,7 @@
                (= (length val) 10)
                (for-all (lambda (x/y) (let ((x (car x/y)) (y (cadr x/y))) (and (member x '(1 2)) (member y '(3 4))))) val)))))
   #t)
+;; val: ((1 3) (1 4) (1 3) (2 4) (2 4) (2 4) (2 3) (2 4) (2 3) (1 4))
 
 (test "6d"
   (let ((val (run 10 (q)
@@ -150,6 +159,7 @@
                (= (length val) 10)
                (for-all (lambda (x/y) (let ((x (car x/y)) (y (cadr x/y))) (and (member x '(1 2)) (member y '(3 4))))) val)))))
   #t)
+;; val: ((1 4) (2 3) (1 3) (2 4) (1 4) (1 3) (2 3) (1 3) (2 3) (1 3))
 
 (test "7a"
   (let ((val (run 10 (q)
@@ -166,6 +176,7 @@
                (= (length val) 10)
                (for-all (lambda (x/y) (let ((x (car x/y)) (y (cadr x/y))) (and (member x '(1 2)) (member y '(3 4))))) val)))))
   #t)
+;; val: ((1 3) (1 3) (1 4) (1 3) (1 3) (1 3) (1 3) (1 4) (1 3) (2 3))
 
 (test "8a"
   (let ((val (run 10 (q)
@@ -182,6 +193,7 @@
                (= (length val) 10)
                (for-all (lambda (x/y) (let ((x (car x/y)) (y (cadr x/y))) (and (member x '(1 2)) (member y '(3 4))))) val)))))
   #t)
+;; val: ((2 3) (1 3) (1 3) (2 4) (2 3) (2 4) (2 4) (2 4) (2 3) (1 3))
 
 (test "9a"
   (let ((val (run 10 (q)
@@ -197,6 +209,7 @@
                (= (length val) 10)
                (for-all (lambda (q) (member q '(1 2 3 4))) val)))))
   #t)
+;; val: (2 1 2 2 2 1 1 2 1 2)
 
 (test "10a"
   (let ((val (run 10 (q)
@@ -210,6 +223,7 @@
                (= (length val) 10)
                (for-all (lambda (q) (member q '(1 2))) val)))))
   #t)
+;; val: (1 2 1 2 1 2 2 1 1 1)
 
 (test "11a"
   (let ((val (run 50 (q)
@@ -233,6 +247,7 @@
                (= (length val) 50)
                (for-all (lambda (q) (member q '(1 2 3 4 5 6 7 8))) val)))))
   #t)
+;; val: (3 4 2 2 4 3 3 2 2 8 3 4 3 3 8 7 7 6 5 8 7 1 6 1 4 3 4 3 3 1 2 1 1 5 8 7 7 7 8 6 4 3 3 6 7 8 7 5 6 6)
 
 (test "12a"
   (let ((val (run 20 (q)
@@ -248,6 +263,7 @@
       (= (length val) 20)
       (not (not (for-all (lambda (q) (member q '(1 2 3 4 5 6))) val)))))
   #t)
+;; val: (2 1 5 3 6 1 2 3 2 2 1 5 6 6 4 5 5 4 6 3)
 
 (test "13a"
   (let ((val (run 20 (q)
@@ -265,6 +281,7 @@
      (= (length val) 20)
      (not (not (for-all (lambda (q) (member q '(1 2 3 4 5 6))) val)))))
   #t)
+;; val: (2 3 2 3 3 3 3 5 1 5 4 4 6 4 5 5 6 4 3 3)
 
 (test "14a"
   (let ((val (run 20 (q)
@@ -283,6 +300,7 @@
      (= (length val) 20)
      (not (not (for-all (lambda (q) (member q '(1 2 3 4 5 6))) val)))))
   #t)
+;; val: (1 2 5 5 6 5 6 5 6 6 5 6 5 5 5 4 4 1 1 2)
 
 (define one-or-two
   (lambda (x)
@@ -298,6 +316,7 @@
      (= (length val) 20)
      (not (not (for-all (lambda (q) (member q '(1 2))) val)))))
   #t)
+;; val: (1 1 1 1 1 1 2 2 1 1 2 1 1 2 1 1 2 2 1 1)
 
 (define geom 
   (lambda (x n)
@@ -313,3 +332,4 @@
      (= (length val) 50)
      (for-all (lambda (q) (and (integer? q) (>= q 0))) val)))
   #t)
+;; val: (0 0 2 0 0 0 0 0 0 0 0 2 4 2 2 1 3 0 0 0 9 6 7 4 3 1 0 1 1 0 1 3 1 1 1 2 1 1 3 1 1 1 1 2 2 2 2 7 5 5)
