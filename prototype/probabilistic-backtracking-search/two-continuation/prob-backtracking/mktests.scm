@@ -333,3 +333,34 @@
      (for-all (lambda (q) (and (integer? q) (>= q 0))) val)))
   #t)
 ;; val: (0 0 2 0 0 0 0 0 0 0 0 2 4 2 2 1 3 0 0 0 9 6 7 4 3 1 0 1 1 0 1 3 1 1 1 2 1 1 3 1 1 1 1 2 2 2 2 7 5 5)
+
+(define mean
+  (lambda (ls)
+    (exact->inexact (/ (apply + ls) (length ls)))))
+
+
+;;; both should be around 1.0
+(mean (apply append (map (lambda (?) (run 1 (q) (geom q 0))) (make-list 10000))))
+
+(mean (run 10000 (q) (geom q 0)))
+
+
+
+
+(define geom2/3
+  (lambda (x n)
+    (conde
+      ((== n x))
+      ((== n x))
+      ((geom2/3 x (add1 n))))))
+
+(mean (run 1000 (q) (geom2/3 q 0)))
+
+(define geom2/3b
+  (lambda (x n)
+    (conde
+      ((== n x))      
+      ((geom2/3b x (add1 n)))
+      ((geom2/3b x (add1 n))))))
+
+(mean (run 1000 (q) (geom2/3b q 0)))
