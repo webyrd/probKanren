@@ -21,11 +21,16 @@
 
 (define empty-s '())
 (define empty-sk/c-ls '())
-(define empty-c `(,empty-s ,empty-sk/c-ls))
+(define empty-rp '())
+(define empty-c `(,empty-s ,empty-sk/c-ls  ,empty-rp))
 
 (define get-s
   (lambda (c)
     (car c)))
+
+(define get-rp
+  (lambda (c)
+    (caadr c)))
 
 (define get-sk/c-ls
   (lambda (c)
@@ -37,10 +42,17 @@
           (sk/c-ls (get-sk/c-ls c)))
       `(,s ((,sk ,c) . ,sk/c-ls)))))
 
+(define ext-rp/c-ls
+  (lambda (rp c)
+    (let ((s (get-s c))
+	  (rp/c-ls (get-rp c)))
+      `(,s ,sk (cons rp rp/c-ls)))))
+
 (define update-s
   (lambda (s c)
-    (let ((sk/c-ls (get-sk/c-ls c)))
-      `(,s ,sk/c-ls))))
+    (let ((sk/c-ls (get-sk/c-ls c))
+	  (rp/c-ls (get-rp c)))
+      `(,s ,sk/c-ls ,rp/c-ls))))
 
 
 (define ext-s
@@ -148,6 +160,29 @@
                              (let ((c^ (ext-sk/c-ls sk^ c^)))
                                (g sk fk^ c^))))))))
          (sk^ fk c)))]))
+
+(define uniform-sample
+  (lambda (lo hi) "stub"))
+
+(define uniform-log-density
+  (lambda (lo hi x) 0))
+
+(define uniform
+  (lambda (lo hi x)
+    (lambda (sk fk c)
+      (let ((s (get-s c)))
+	0))))
+
+(define flip-sample
+  (lambda (p) "stub"))
+
+(define flip-log-density
+  (lambda (p x) p))
+
+(define flip
+  (lambda (p x)
+    (lambda (sk fk c)
+      #t)))
 
 (define retry
   (lambda (fk c)
