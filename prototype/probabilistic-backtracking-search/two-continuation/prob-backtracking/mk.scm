@@ -26,6 +26,8 @@
 (define empty-rp-ls '())
 (define empty-c `(,empty-s ,empty-sk/c-ls  ,empty-rp-ls))
 
+(define make-rp list)
+
 (define get-s
   (lambda (c)
     (car c)))
@@ -36,7 +38,7 @@
 
 (define get-rp-ls
   (lambda (c)
-    (caadr c)))
+    (caddr c)))
 
 (define ext-sk/c-ls
   (lambda (sk c)
@@ -45,13 +47,12 @@
           (rp-ls (get-rp-ls c)))
       `(,s ((,sk ,c) . ,sk/c-ls) ,rp-ls))))
 
-;; a single rp is a pair of functions representing a random primitive
-;; (such as uniform or flip): (get-samples . get-density)
 (define ext-rp-ls
   (lambda (rp c)
     (let ((s (get-s c))
+          (sk/c-ls (get-sk/c-ls c))
 	  (rp-ls (get-rp-ls c)))
-      `(,s ,sk ,(cons rp rp-ls)))))
+      `(,s ,sk/c-ls ,(cons rp rp-ls)))))
 
 (define update-s
   (lambda (s c)
@@ -175,8 +176,8 @@
 (define uniform
   (lambda (lo hi x)
     (lambda (sk fk c)
-      (let ((s (get-s c)))
-	0))))
+      (let ((rp (make-rp uniform-sample uniform-log-density lo hi x)))
+        (sk fk (ext-rp-ls rp c))))))
 
 
 (define flip-sample
@@ -191,7 +192,51 @@
 (define flip
   (lambda (p x)
     (lambda (sk fk c)
-      #t)))
+      (let ((rp (make-rp flip-sample flip-log-density p x)))
+        (sk fk (ext-rp-ls rp c))))))
+
+;; x must be a boolean value, or fresh
+;;
+;; p must be a real number between 0 and 1.0 inclusive, or fresh
+;;
+;; otherwise, signal an error
+;; (define flip-solver
+;;   (lambda (rp c)
+;;     (let ((p (get-p rp))
+;;           (x (get-x rp)))
+;;       (let ((s (get-s c)))
+;;         (let ((p (walk p s))
+;;               (x (walk x s)))
+;;           (cond
+;;             [(and (ground? p) (not (ground? x)))
+;;              (let ((b (flip-sample p)))
+;;                (== b x))
+;;              ;; then unify x with (flip-sample p)             
+;;              ]            
+;;             [(and (ground? p) (ground? x))
+;;              ;; verify             
+;;              ]
+;;             [(and (not (ground? p)) (ground? x))             
+;;              ;; add constraint to rp-ls         
+;;              ]
+;;             [(and (not (ground? p)) (not (ground? x)))
+;;              ;; add constraint to rp-ls
+;;              ]))))))
+
+(define solve-rp-constraints
+  ;; fake goal that runs last in run-mh  
+  (lambda (sk fk c)
+    (printf "solve-rp-constraints c: ~s\n" c)
+    (sk fk c)))
+
+(define ground?
+  (lambda (t)
+    (cond
+      [(var? t) #f]
+      [(pair? t)
+       (and (ground? (car t)) (ground? (cdr t)))]
+      [else #t])))
+
 
 (define retry
   (lambda (fk c)
@@ -221,6 +266,31 @@
      (let ((n ne)
            (x (var 'x)))
        (let ((ans ((fresh () g g* ...)
+                   (lambda (fk c)
+                     (list fk c))
+                   (lambda () '())
+                   empty-c)))
+         (let loop ((n n)
+                    (ans ans)
+                    (ls '()))
+           (cond
+             ((zero? n) (reverse ls))
+             ((null? ans) (reverse ls))
+             (else
+              (let ((fk (car ans))
+                    (c (cadr ans)))
+                (let ((s (get-s c)))
+                  (loop
+                    (sub1 n)
+                    (retry fk c)
+                    (cons (reify x s) ls)))))))))]))
+
+(define-syntax run-mh
+  (syntax-rules ()
+    [(_ ne (x) g g* ...)
+     (let ((n ne)
+           (x (var 'x)))
+       (let ((ans ((fresh () g g* ... solve-rp-constraints)
                    (lambda (fk c)
                      (list fk c))
                    (lambda () '())
