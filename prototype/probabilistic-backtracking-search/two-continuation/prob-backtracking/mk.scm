@@ -211,34 +211,6 @@
       (let ((rp (make-rp flip-sample flip-log-density x p)))
         (sk fk (ext-rp-ls rp c))))))
 
-;; x must be a boolean value, or fresh
-;;
-;; p must be a real number between 0 and 1.0 inclusive, or fresh
-;;
-;; otherwise, signal an error
-;; (define flip-solver
-;;   (lambda (rp c)
-;;     (let ((p (get-p rp))
-;;           (x (get-x rp)))
-;;       (let ((s (get-s c)))
-;;         (let ((p (walk p s))
-;;               (x (walk x s)))
-;;           (cond
-;;             [(and (ground? p) (not (ground? x)))
-;;              (let ((b (flip-sample p)))
-;;                (== b x))
-;;              ;; then unify x with (flip-sample p)             
-;;              ]            
-;;             [(and (ground? p) (ground? x))
-;;              ;; verify             
-;;              ]
-;;             [(and (not (ground? p)) (ground? x))             
-;;              ;; add constraint to rp-ls         
-;;              ]
-;;             [(and (not (ground? p)) (not (ground? x)))
-;;              ;; add constraint to rp-ls
-;;              ]))))))
-
 (define solve-rp-constraints
   ;; fake goal that runs last in run-mh  
   (lambda (sk fk c)
