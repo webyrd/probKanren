@@ -165,6 +165,12 @@
      (let ((x* (var 'x*)) ...)
        (conj* g g* ...))]))
 
+;; TODO
+;;
+;; need to repackage the sk/c list in terms of rp's
+;;
+;; might also need to be able to invoke a special fk if the
+;; constraints introduced result in a low probability trace
 (define-syntax conde
   (syntax-rules ()
     [(_ (g0 g0* ...) (g* g** ...) ...)
@@ -211,6 +217,10 @@
       (let ((rp (make-rp flip-sample flip-log-density x p)))
         (sk fk (ext-rp-ls rp c))))))
 
+;; TODO
+;;
+;; keep track of the extension to the original substitution caused by
+;; sampling
 (define solve-rp-constraints
   ;; fake goal that runs last in run-mh  
   (lambda (sk fk c)
@@ -304,6 +314,13 @@
                     (retry fk c)
                     (cons (reify x s) ls)))))))))]))
 
+;; TODO
+;;
+;; needs to do resampling: keeping track of the extension to the
+;; original substitution produced by sampling in solve-rp-constraints
+;;
+;; calculate log densities of rps to figure out whether to keep the
+;; old substitution or the new substitution to answer the query
 (define-syntax run-mh
   (syntax-rules ()
     [(_ ne (x) g g* ...)
