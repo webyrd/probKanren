@@ -21,38 +21,41 @@
 
 (define empty-s '())
 (define empty-sk/c-ls '())
-(define empty-rp '())
-(define empty-c `(,empty-s ,empty-sk/c-ls  ,empty-rp))
+(define empty-rp-ls '())
+(define empty-c `(,empty-s ,empty-sk/c-ls  ,empty-rp-ls))
 
 (define get-s
   (lambda (c)
     (car c)))
 
-(define get-rp
-  (lambda (c)
-    (caadr c)))
-
 (define get-sk/c-ls
   (lambda (c)
     (cadr c)))
 
+(define get-rp-ls
+  (lambda (c)
+    (caadr c)))
+
 (define ext-sk/c-ls
   (lambda (sk c)
     (let ((s (get-s c))
-          (sk/c-ls (get-sk/c-ls c)))
-      `(,s ((,sk ,c) . ,sk/c-ls)))))
+          (sk/c-ls (get-sk/c-ls c))
+          (rp-ls (get-rp-ls c)))
+      `(,s ((,sk ,c) . ,sk/c-ls) ,rp-ls))))
 
-(define ext-rp/c-ls
+;; a single rp is a pair of functions representing a random primitive
+;; (such as uniform or flip): (get-samples . get-density)
+(define ext-rp-ls
   (lambda (rp c)
     (let ((s (get-s c))
-	  (rp/c-ls (get-rp c)))
-      `(,s ,sk (cons rp rp/c-ls)))))
+	  (rp-ls (get-rp-ls c)))
+      `(,s ,sk ,(cons rp rp-ls)))))
 
 (define update-s
   (lambda (s c)
     (let ((sk/c-ls (get-sk/c-ls c))
-	  (rp/c-ls (get-rp c)))
-      `(,s ,sk/c-ls ,rp/c-ls))))
+	  (rp-ls (get-rp-ls c)))
+      `(,s ,sk/c-ls ,rp-ls))))
 
 
 (define ext-s
@@ -77,14 +80,12 @@
         (else #f)))))
 
 
-
 (define walk
   (lambda (u S)
     (cond
       ((and (var? u) (assq u S)) =>
        (lambda (pr) (walk (rhs pr) S)))
       (else u))))
-
 
 (define walk*
   (lambda (w s)
@@ -96,7 +97,6 @@
            (walk* (car v) s)
            (walk* (cdr v) s)))
         (else v)))))
-
 
 
 (define unify
@@ -138,7 +138,6 @@
       ((null? g*) succeed)
       ((null? (cdr g*)) (car g*))
       (else (conj (car g*) (conj*-aux (cdr g*)))))))
-
 
 
 (define-syntax fresh
@@ -230,7 +229,6 @@
                     (sub1 n)
                     (retry fk c)
                     (cons (reify x s) ls)))))))))]))
-
 
 
 (define reify-s
