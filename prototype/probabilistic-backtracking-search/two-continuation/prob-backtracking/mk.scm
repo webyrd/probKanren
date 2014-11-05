@@ -185,7 +185,8 @@
       (<= samp p))))
 
 (define flip-log-density
-  (lambda (p x) p))
+  (lambda (p x)
+    (log (if x p (- 1 p)))))
 
 (define flip
   (lambda (p x)
