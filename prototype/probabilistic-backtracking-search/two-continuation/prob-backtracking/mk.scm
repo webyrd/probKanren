@@ -243,20 +243,38 @@
   ;; fake goal that runs last in run-mh  
   (lambda (sk fk c)
     (printf "solve-rp-constraints c: ~s\n" c)
-    (let loop ((c c))
-      (let ((rp-ls (get-rp-ls c)))
-        (cond
-          [(null? rp-ls) (sk fk c)]
-          [else
-           (let ((rp (car rp-ls)))
-             (let ((sample (get-sample rp))
-                   (log-density (get-log-density rp))
-                   (x (get-x rp))
-                   (rest-args (get-rest-args rp)))
-               (let ((s (get-s c)))
-                 (let ((x (walk* x s))
-                       (rest-args (walk* rest-args s)))
-                   ))))])))))
+    (let loop ((rp-ls (get-rp-ls c))
+               (s (get-s c)))
+      (cond
+        [(null? rp-ls) (sk fk (update-s s c))]
+        [else
+         (let ((rp (car rp-ls)))
+           (let ((x (get-x rp))
+                 (rest-args (get-rest-args rp)))
+             (let ((x (walk* x s))
+                   (rest-args (walk* rest-args s)))
+               (cond
+                 [(andmap ground? rest-args)
+                  (if (ground? x)
+                      (loop (cdr rp-ls) s)
+                      (let ((sample (get-sample rp)))
+                        (let ((samp (apply sample rest-args)))
+                          (loop (cdr rp-ls) (ext-s x samp s)))))]
+                 [(can-any-rp-can-be-processed? (cdr rp-ls) s)
+                  (loop (append (cdr rp-ls) (list rp)) s)]
+                 [else (error 'solve-rp-constraints "can't make progress with rps")]))))]))))
+
+(define can-any-rp-can-be-processed?
+  (lambda (rp-ls s)
+    (let loop ((rp-ls rp-ls))
+      (cond
+        [(null? rp-ls) #f]
+        [(let ((rp (car rp-ls)))
+           (let ((rest-args (get-rest-args rp)))
+             (let ((rest-args (walk* rest-args s)))
+               (andmap ground? rest-args))))
+         #t]
+        [else (loop (cdr rp-ls))]))))
 
 (define ground?
   (lambda (t)
@@ -367,3 +385,14 @@
 (define fail
   (lambda (sk fk c)
     (fk)))
+
+
+;; interesting test--what does this mean?
+;;
+;; (run 1 (q) (flip 0.00001 q) (flip 0.999999 q))
+;;
+;; vs.
+;;
+;; (run 1 (q) (flip 0.999999 q) (flip 0.00001 q))
+;;
+;; Are these equivalent?  Does this make sense?
