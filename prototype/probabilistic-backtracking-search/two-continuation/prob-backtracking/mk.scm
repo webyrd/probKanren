@@ -28,6 +28,22 @@
 
 (define make-rp list)
 
+(define get-sample
+  (lambda (rp)
+    (car rp)))
+
+(define get-log-density
+  (lambda (rp)
+    (cadr rp)))
+
+(define get-x
+  (lambda (rp)
+    (caddr rp)))
+
+(define get-rest-args
+  (lambda (rp)
+    (cdddr rp)))
+
 (define get-s
   (lambda (c)
     (car c)))
@@ -170,13 +186,13 @@
       samp)))
 
 (define uniform-log-density
-  (lambda (lo hi x)
+  (lambda (x lo hi)
     (log (/ (- hi lo)))))
 
 (define uniform
   (lambda (lo hi x)
     (lambda (sk fk c)
-      (let ((rp (make-rp uniform-sample uniform-log-density lo hi x)))
+      (let ((rp (make-rp uniform-sample uniform-log-density x lo hi)))
         (sk fk (ext-rp-ls rp c))))))
 
 
@@ -186,13 +202,13 @@
       (<= samp p))))
 
 (define flip-log-density
-  (lambda (p x)
+  (lambda (x p)
     (log (if x p (- 1 p)))))
 
 (define flip
   (lambda (p x)
     (lambda (sk fk c)
-      (let ((rp (make-rp flip-sample flip-log-density p x)))
+      (let ((rp (make-rp flip-sample flip-log-density x p)))
         (sk fk (ext-rp-ls rp c))))))
 
 ;; x must be a boolean value, or fresh
@@ -227,7 +243,20 @@
   ;; fake goal that runs last in run-mh  
   (lambda (sk fk c)
     (printf "solve-rp-constraints c: ~s\n" c)
-    (sk fk c)))
+    (let loop ((c c))
+      (let ((rp-ls (get-rp-ls c)))
+        (cond
+          [(null? rp-ls) (sk fk c)]
+          [else
+           (let ((rp (car rp-ls)))
+             (let ((sample (get-sample rp))
+                   (log-density (get-log-density rp))
+                   (x (get-x rp))
+                   (rest-args (get-rest-args rp)))
+               (let ((s (get-s c)))
+                 (let ((x (walk* x s))
+                       (rest-args (walk* rest-args s)))
+                   ))))])))))
 
 (define ground?
   (lambda (t)
