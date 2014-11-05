@@ -171,6 +171,10 @@
 ;;
 ;; might also need to be able to invoke a special fk if the
 ;; constraints introduced result in a low probability trace
+;;
+;; probably need to pass some or all of the sampled values to the
+;; continuation when backtracking above a conde, so we can re-use as
+;; much of the sample information as possible.
 (define-syntax conde
   (syntax-rules ()
     [(_ (g0 g0* ...) (g* g** ...) ...)
