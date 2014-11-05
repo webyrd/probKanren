@@ -1,3 +1,5 @@
+;; Vicare doesn't seem to support random of a fixnum--need to use Chez for now.
+
 (define-syntax rhs
   (syntax-rules ()
     ((_ x) (cdr x))))
@@ -160,11 +162,15 @@
                                (g sk fk^ c^))))))))
          (sk^ fk c)))]))
 
+
 (define uniform-sample
-  (lambda (lo hi) "stub"))
+  (lambda (lo hi)
+    (let ((samp (+ (random (- hi lo)) lo)))
+      samp)))
 
 (define uniform-log-density
-  (lambda (lo hi x) 0))
+  (lambda (lo hi x)
+    (log (/ (- hi lo)))))
 
 (define uniform
   (lambda (lo hi x)
@@ -172,8 +178,11 @@
       (let ((s (get-s c)))
 	0))))
 
+
 (define flip-sample
-  (lambda (p) "stub"))
+  (lambda (p)
+    (let ((samp (random 1.0)))
+      (<= samp p))))
 
 (define flip-log-density
   (lambda (p x) p))
