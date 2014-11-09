@@ -232,7 +232,8 @@
     (let loop ((rp-ls (get-rp-ls c))
                (s (get-s c)))
       (cond
-        [(null? rp-ls) (sk fk (update-s s c))]
+        [(null? rp-ls) (sk fk (list (update-s s c)
+				    (get-s c)))]
         [else
          (let ((rp (car rp-ls)))
            (let ((x (get-x rp))
@@ -318,6 +319,13 @@
                     (retry fk c)
                     (cons (reify x s) ls)))))))))]))
 
+(define get-subst-prefix
+  (lambda (s-old s-new)
+    (cond
+     [(eq? s-old s-new) '()]
+     [else (cons (car s-new)
+		 (get-subst-prefix s-old
+				   (cdr s-new)))])))
 ;; TODO
 ;;
 ;; needs to do resampling: keeping track of the extension to the
@@ -343,13 +351,15 @@
              ((null? ans) (reverse ls))
              (else
               (let ((fk (car ans))
-                    (c (cadr ans)))
-                (let ((s (get-s c)))
-                  (loop
-                    (sub1 n)
-                    (retry fk c)
-                    (cons (reify x s) ls)))))))))]))
-
+                    (c/old-s (cadr ans)))
+		(let ((c (car c/old-s))
+		      (old-s (cadr c/old-s)))
+		  (let ((s (get-s c)))
+		    (let ((s-prefix (get-subst-prefix old-s s)))
+		      (loop
+		       (sub1 n)
+		       (retry fk c)
+		       (cons (reify x s) ls)))))))))))]))
 
 (define reify-s
   (lambda (v s)
