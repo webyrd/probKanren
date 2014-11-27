@@ -283,6 +283,19 @@
                     (c (cadr sk/c)))
                 (sk fk c))))))))
 
+(define resample
+  (lambda (s-prefix fk c/old-s)
+    (let ((c (car c/old-s))
+	  (old-s (cadr c/old-s)))
+      (cond
+       [(null? s-prefix) c/old-s]
+       [else
+	(let ((index-s-prefix (random (length s-prefix))))
+	  (let ((pr (list-ref s-prefix index-s-prefix)))
+	    (let ((new-s-prefix (remq pr s-prefix)))
+	      (let ((rp-ls (get-rp-ls c)))
+		(let ((rp (walk pr rp-ls)))
+		      0)))))]))))
 
 (define-syntax run*
   (syntax-rules ()
@@ -358,7 +371,7 @@
 		    (let ((s-prefix (get-subst-prefix old-s s)))
 		      (loop
 		       (sub1 n)
-		       (retry fk c)
+		       (resample s-prefix fk c/old-s)
 		       (cons (reify x s) ls)))))))))))]))
 
 (define reify-s
