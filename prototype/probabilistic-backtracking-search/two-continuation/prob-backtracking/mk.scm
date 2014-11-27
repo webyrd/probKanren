@@ -408,7 +408,9 @@
           (let ((ll^ (apply + (map (mproc c^) rp-ls^)))
                 (ll (apply + (map (mproc c) rp-ls))))
             (let ((u (random 1.0)))
-              (> (log u) (- ll^ ll)))))))))
+              (> (log u)
+                 ;; TODO will need another term and some bookkeeping here
+                 (+ (- ll^ ll) (- (length rp-ls^) (length rp-ls)))))))))))
 
 (define reify-s
   (lambda (v s)
