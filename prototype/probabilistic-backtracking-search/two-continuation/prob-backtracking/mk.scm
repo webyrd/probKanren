@@ -283,6 +283,14 @@
                     (c (cadr sk/c)))
                 (sk fk c))))))))
 
+(define walk-rp
+  (lambda (u S)
+    (cond
+     [(null? S) u]
+     [(eq? (caddr (car S)) u)
+      (car S)]
+     [else (walk-rp u (cdr S))])))
+
 (define resample
   (lambda (s-prefix fk c/old-s)
     (let ((c (car c/old-s))
