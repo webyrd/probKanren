@@ -307,7 +307,7 @@
                     (let ((resample-proc (car rp-info))
                           (args (cadddr rp-info)))
                       (let ((val (apply resample-proc args)))
-                        (let ((s (cons (cons x val) new-s-prefix)))
+                        (let ((s (append (cons (cons x val) new-s-prefix) old-s)))
                           (list (update-s s c)
                                 (get-s c)))))))))))]))))
 
