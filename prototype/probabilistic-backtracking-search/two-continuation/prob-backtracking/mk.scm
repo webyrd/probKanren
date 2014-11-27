@@ -200,7 +200,7 @@
        (letrec ((sk^ (lambda (fk^ c^)
                        (let ((g-ls (list (conj* g0 g0* ...)
                                          (conj* g* g** ...)
-                                         ...)))                         
+                                         ...)))
                          (let ((make-conde-sample
                                 (lambda ()
                                   (let ((pick (random (length g-ls))))
