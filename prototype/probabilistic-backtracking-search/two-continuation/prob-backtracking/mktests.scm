@@ -371,12 +371,18 @@
 
 (run-mh 2 (q) (== #f #f))
 
+(run-mh 100 (q) (== #f #f))
+
 
 (run-mh 1 (q) (== 0.5 q) (flip q #t))
 
 (run-mh 2 (q) (== 0.5 q) (flip q #t))
 
+(run-mh 100 (q) (== 0.5 q) (flip q #t))
+
 
 (run-mh 1 (q) (fresh (r) (uniform 0.0 0.4 r) (uniform r 1.0 q) (fresh (x) (== x #t) (flip q x))))
 
 (run-mh 2 (q) (fresh (r) (uniform 0.0 0.4 r) (uniform r 1.0 q) (fresh (x) (== x #t) (flip q x))))
+
+(run-mh 100 (q) (fresh (r) (uniform 0.0 0.4 r) (uniform r 1.0 q) (fresh (x) (== x #t) (flip q x))))
