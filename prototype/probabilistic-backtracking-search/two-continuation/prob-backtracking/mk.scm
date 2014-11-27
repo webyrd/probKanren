@@ -189,6 +189,34 @@
                                (g sk fk^ c^))))))))
          (sk^ fk c)))]))
 
+#|
+
+;; TODO need to figure out the fixpoint with c
+
+(define-syntax conde
+  (syntax-rules ()
+    [(_ (g0 g0* ...) (g* g** ...) ...)
+     (lambda (sk fk c)
+       (letrec ((sk^ (lambda (fk^ c^)
+                       (let ((g-ls (list (conj* g0 g0* ...)
+                                         (conj* g* g** ...)
+                                         ...)))                         
+                         (let ((make-conde-sample
+                                (lambda ()
+                                  (let ((pick (random (length g-ls))))
+                                    (let ((g (list-ref g-ls pick)))
+                                      (let ((c^ (ext-sk/c-ls sk^ c^)))
+                                        (g sk fk^ c^))))))
+                               (conde-density
+                                (lambda (x-ignored)
+                                  (log (/ (length g-ls))))))
+                           (let ((rp (make-rp make-conde-sample conde-density 'x-ignore)))
+                             (let ((pick (random (length g-ls))))
+                               (let ((g (list-ref g-ls pick)))
+                                 (let ((c^ (ext-sk/c-ls sk^ c^)))
+                                   (g sk fk^ c^))))))))))
+         (sk^ fk c)))]))
+|#
 
 (define uniform-sample
   (lambda (lo hi)
