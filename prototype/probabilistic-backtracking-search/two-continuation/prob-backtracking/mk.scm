@@ -386,7 +386,7 @@
 		    (let ((s-prefix (get-subst-prefix old-s s)))
 		      (loop
 		       (sub1 n)
-		       (resample s-prefix fk c/old-s)
+		       (list fk (resample s-prefix fk c/old-s)) ;; do we really need this fk?
 		       (cons (reify x s) ls)))))))))))]))
 
 (define reify-s
