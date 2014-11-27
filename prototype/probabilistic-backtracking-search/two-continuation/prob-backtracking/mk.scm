@@ -306,7 +306,7 @@
                   (let ((rp-info (find-rp-info x rp-ls)))
                     (let ((resample-proc (car rp-info))
                           (args (cadddr rp-info)))
-                      (let ((val (apply resample-proc (map (lambda (x) (walk* x old-s) args))))
+                      (let ((val (apply resample-proc (walk* args (append new-s-prefix old-s)))))
                         (let ((s (append (cons (cons x val) new-s-prefix) old-s)))
                           (list (update-s s c)
                                 old-s))))))))))]))))
