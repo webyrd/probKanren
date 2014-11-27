@@ -283,13 +283,13 @@
                     (c (cadr sk/c)))
                 (sk fk c))))))))
 
-(define walk-rp
-  (lambda (u S)
+(define find-rp-info
+  (lambda (x rp-ls)
     (cond
-     [(null? S) u]
-     [(eq? (caddr (car S)) u)
-      (car S)]
-     [else (walk-rp u (cdr S))])))
+      [(null? rp-ls) (error 'find-rp-info "could not find rp")]
+      [(eq? (caddr (car rp-ls)) x)
+       (car rp-ls)]
+      [else (find-rp-info x (cdr rp-ls))])))
 
 (define resample
   (lambda (s-prefix fk c/old-s)
@@ -302,8 +302,14 @@
 	  (let ((pr (list-ref s-prefix index-s-prefix)))
 	    (let ((new-s-prefix (remq pr s-prefix)))
 	      (let ((rp-ls (get-rp-ls c)))
-		(let ((rp (walk pr rp-ls)))
-		      0)))))]))))
+                (let ((x (car pr)))
+                  (let ((rp-info (find-rp-info x rp-ls)))
+                    (let ((resample-proc (car rp-info))
+                          (args (cadddr rp-info)))
+                      (let ((val (apply resample-proc args)))
+                        (let ((s (cons (cons x val) new-s-prefix)))
+                          (list (update-s s c)
+                                (get-s c)))))))))))]))))
 
 (define-syntax run*
   (syntax-rules ()
