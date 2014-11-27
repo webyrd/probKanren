@@ -386,8 +386,29 @@
 		    (let ((s-prefix (get-subst-prefix old-s s)))
 		      (loop
 		       (sub1 n)
-		       (list fk (resample s-prefix fk c/old-s)) ;; do we really need this fk?
+                       (let ((c/old-s^ (resample s-prefix fk c/old-s)))
+                         (if (reject-sample? c/old-s^ c/old-s)
+                             (list fk c/old-s)     ;; do we really need this fk?
+                             (list fk c/old-s^)))  ;; do we really need this fk?
 		       (cons (reify x s) ls)))))))))))]))
+
+(define reject-sample?
+  (lambda (c/old-s^ c/old-s)
+    (let ((c^ (car c/old-s^))
+          (old-s^ (cadr c/old-s^))
+          (c (car c/old-s))
+	  (old-s (cadr c/old-s)))
+      (let ((rp-ls^ (get-rp-ls c^))
+            (rp-ls (get-rp-ls c)))
+        (let ((mproc (lambda (c)
+                       (lambda (rp-info)
+                         (let ((proc (cadr rp-info))
+                               (x/args (cddr rp-info)))
+                           (apply proc (walk* x/args (get-s c))))))))
+          (let ((ll^ (apply + (map (mproc c^) rp-ls^)))
+                (ll (apply + (map (mproc c) rp-ls))))
+            (let ((u (random 1.0)))
+              (> (log u) (- ll^ ll)))))))))
 
 (define reify-s
   (lambda (v s)
