@@ -373,6 +373,10 @@
 
 (run-mh 100 (q) (== #f #f))
 
+(run-mh 1 (q)
+  (conde
+    ((== #f #f))
+    ((== #t #t))))
 
 (run-mh 1 (q) (== 0.5 q) (flip q #t))
 
