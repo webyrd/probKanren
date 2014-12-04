@@ -206,7 +206,7 @@
                                                    (conde-density
                                                     (lambda (x-ignored)
                                                       (log (/ (length g-ls))))))
-                                               (let ((rp (make-rp make-conde-sample conde-density 'x-ignore)))
+                                               (let ((rp (make-rp make-conde-sample conde-density 'x-ignore-from-conde)))
                                                  (let ((c^ (ext-sk/c-ls sk^ c^)))
                                                    (let ((c^ (ext-rp-ls rp c^)))
                                                      (let ((g (list-ref g-ls (random (length g-ls)))))
@@ -257,7 +257,7 @@
                (s (get-s c)))
       (cond
         [(null? rp-ls) (sk fk (list (update-s s c)
-				    (get-s c)))]
+                                    (get-samplable-rp-ls s c)))]
         [else
          (let ((rp (car rp-ls)))
            (let ((x (get-x rp))
@@ -304,35 +304,59 @@
       [else (find-rp-info x (cdr rp-ls))])))
 
 (define resample
-  (lambda (s-prefix fk c/old-s)
-    (let ((c (car c/old-s))
-	  (old-s (cadr c/old-s)))
-      (cond
-       [(null? s-prefix) ;; there are no rps for us to sample
-        ;; R and F are reverse and forward transition probabilities
-        (let ((R 0.0) (F 0.0))
-          (list c/old-s R F))]
-       [else
-	(let ((index-s-prefix (random (length s-prefix))))
-	  (let ((pr (list-ref s-prefix index-s-prefix)))
-	    (let ((new-s-prefix (remq pr s-prefix)))
-	      (let ((rp-ls (get-rp-ls c)))
-                (let ((x (car pr)))
-                  (let ((rp-info (find-rp-info x rp-ls)))
-                    (let ((resample-proc (car rp-info))
-                          (args (cdddr rp-info)))
-                      (let ((density-proc (cadr rp-info))
-                            (x/args (cddr rp-info)))
-                        (let ((R (let ((s (get-s c)))
-                                   (apply density-proc (walk* x/args s)))))
-                          (let ((val (apply resample-proc
-                                            (walk* args (append new-s-prefix old-s)))))
-                            (let ((s (append (cons (cons x val) new-s-prefix) old-s)))
-                              (let ((F (apply density-proc (walk* x/args s))))
-                                (list (list (update-s s c)
-                                            old-s)
-                                      R
-                                      F)))))))))))))]))))
+  (lambda (rp-ls fk c)
+    (let ((rp (list-ref rp-ls (random (length rp-ls)))))
+      ;; (printf "rp 1: ~s\n" rp)
+      (let ((resample-proc (car rp))
+            (args (cdddr rp)))
+        ;; (printf "args: ~s\n" args)
+        (let ((density-proc (cadr rp))
+              (x/args (cddr rp)))
+          ;; (printf "x/args: ~s\n" x/args)
+          (let ((x (car x/args)))
+            ;; (printf "x: ~s\n" x)
+            (let ((s (get-s c)))
+              ;; (printf "s: ~s\n" s)
+              (let ((R (apply density-proc (walk* x/args s))))
+                ;; (printf "R: ~s\n" R)
+                (let ((s-x (remove-from-s x s)))
+                  (let ((val (apply resample-proc (walk* args s-x))))
+                    ;; (printf "val: ~s\n" val)
+                    (let ((s (cons (cons x val) s-x)))
+                      (let ((F (apply density-proc (walk* x/args s))))
+                        (list (update-s s c)
+                              R
+                              F)))))))))))))
+
+(define remove-from-s
+  (lambda (x s)
+    (let ((pr (assq x s)))
+      (if pr
+          (remq pr s)
+          s))))
+
+(define get-samplable-rp-ls
+  (lambda (s c)
+    (let ((s-old (get-s c))
+          (rp-ls (get-rp-ls c)))
+      (let ((s-prefix (get-subst-prefix s-old s)))
+        ;; (printf "s-prefix: ~s\n" s-prefix)
+        (let loop ((rp-ls rp-ls)
+                   (acc '()))
+          (cond
+            ((null? rp-ls)
+             ;; (printf "acc: ~s\n" acc)
+             acc)
+            (else (let ((rp (car rp-ls)))
+;                    (printf "rp: ~s\n" rp)
+                    (let ((x (caddr rp)))
+;                      (printf "x: ~s\n" x)
+                      (cond
+                        ((eq? 'x-ignore-from-conde x)
+                         (loop (cdr rp-ls) (cons rp acc)))
+                        ((assq x s-prefix)
+                         (loop (cdr rp-ls) (cons rp acc)))
+                        (else (loop (cdr rp-ls) acc))))))))))))
 
 (define get-subst-prefix
   (lambda (s-old s-new)
@@ -341,6 +365,7 @@
      [else (cons (car s-new)
 		 (get-subst-prefix s-old
 				   (cdr s-new)))])))
+
 
 (define-syntax run-mh
   (syntax-rules ()
@@ -360,57 +385,55 @@
              ((null? ans) (reverse ls))
              (else
               (let ((fk (car ans))
-                    (c/old-s (cadr ans)))
-		(let ((c (car c/old-s))
-		      (old-s (cadr c/old-s)))
-		  (let ((s (get-s c)))
-		    (let ((s-prefix (get-subst-prefix old-s s)))
-                      (loop
-                       (sub1 n)
-                       (if (null? s-prefix)
-                           '()
-                           (let ((c/old-s^/R/F (resample s-prefix fk c/old-s)))
-                             (let ((c/old-s^ (car c/old-s^/R/F))
-                                   (R (cadr c/old-s^/R/F))
-                                   (F (caddr c/old-s^/R/F)))
-                               (if (reject-sample? c/old-s^ c/old-s R F)
-                                   (list fk c/old-s) ;; do we really need this fk?
-                                   (list fk c/old-s^)))))
-                        ;; do we really need this fk?
-                       (cons (reify x s) ls)))))))))))]))
+                    (c/rp-ls (cadr ans)))
+                ;; (printf "c/rp-ls: ~s\n" c/rp-ls)
+                (let ((c (car c/rp-ls))
+                      (rp-ls (cadr c/rp-ls)))
+                  ;; (printf "cdr of c/rp-ls: ~s\n" (cdr c/rp-ls))
+                  ;; (printf "rp-ls run-mh: ~s\n" rp-ls)
+                  (loop
+                   (sub1 n)
+                   (if (null? rp-ls)
+                       ans
+                       (let ((c^/R/F (resample rp-ls fk c)))
+                         (let ((c^ (car c^/R/F))
+                               (R (cadr c^/R/F))
+                               (F (caddr c^/R/F)))                                                    
+                           (if (reject-sample? c^ c R F)
+                               (list fk c/rp-ls) ;; do we really need this fk?
+                               (list fk (list c^ rp-ls)) ;; do we really need this fk?
+                               )
+                           )))
+                   (cons (reify x (get-s c)) ls)))))))))]))
 
 (define reject-sample?
-  (lambda (c/old-s^ c/old-s R F)
-    (let ((c^ (car c/old-s^))
-          (old-s^ (cadr c/old-s^))
-          (c (car c/old-s))
-	  (old-s (cadr c/old-s)))
-      (let ((rp-ls^ (get-rp-ls c^))
-            (rp-ls (get-rp-ls c)))
-        (let ((mproc
-               ;; mproc takes a constraint store and an rp, and
-               ;; calculates the log probability of that rp
-               (lambda (c)
-                 (lambda (rp-info)
-                   (let ((density-proc (cadr rp-info))
-                         (x/args (cddr rp-info)))
-                     (apply density-proc (walk* x/args (get-s c))))))))
-          ;; The 'let' below corresponds to line 12 of Figure 2 from
-          ;; page 3 of 'Lightweight Implementations of Probabilistic
-          ;; Programming Languages Via Transformational'
-          ;; (http://web.stanford.edu/~ngoodman/papers/lightweight-mcmc-aistats2011.pdf)
-          ;;
-          ;; D and D' are equivalent to rp and rp^          
-          (let ((ll^ (apply + (map (mproc c^) rp-ls^)))
-                (ll (apply + (map (mproc c) rp-ls)))                
-                (rp-len^ (log (length rp-ls^)))
-                (rp-len (log (length rp-ls)))
-                (ll-stale (apply + (map (mproc c) (set-diff rp-ls rp-ls^))))
-                (ll-fresh (apply + (map (mproc c) (set-diff rp-ls^ rp-ls)))))
-            (let ((u (random 1.0)))
-              (> (log u)
-                 ;; intuitively, new - old...
-                 (+ (- ll^ ll) (- R F) (- rp-len^ rp-len) (- ll-stale ll-fresh))))))))))
+  (lambda (c^ c R F)
+    (let ((rp-ls^ (get-rp-ls c^))
+          (rp-ls (get-rp-ls c)))
+      (let ((mproc
+             ;; mproc takes a constraint store and an rp, and
+             ;; calculates the log probability of that rp
+             (lambda (c)
+               (lambda (rp-info)
+                 (let ((density-proc (cadr rp-info))
+                       (x/args (cddr rp-info)))
+                   (apply density-proc (walk* x/args (get-s c))))))))
+        ;; The 'let' below corresponds to line 12 of Figure 2 from
+        ;; page 3 of 'Lightweight Implementations of Probabilistic
+        ;; Programming Languages Via Transformational'
+        ;; (http://web.stanford.edu/~ngoodman/papers/lightweight-mcmc-aistats2011.pdf)
+        ;;
+        ;; D and D' are equivalent to rp and rp^          
+        (let ((ll^ (apply + (map (mproc c^) rp-ls^)))
+              (ll (apply + (map (mproc c) rp-ls)))                
+              (rp-len^ (log (length rp-ls^)))
+              (rp-len (log (length rp-ls)))
+              (ll-stale (apply + (map (mproc c) (set-diff rp-ls rp-ls^))))
+              (ll-fresh (apply + (map (mproc c) (set-diff rp-ls^ rp-ls)))))
+          (let ((u (random 1.0)))
+            (> (log u)
+               ;; intuitively, new - old...
+               (+ (- ll^ ll) (- R F) (- rp-len^ rp-len) (- ll-stale ll-fresh)))))))))
 
 ;; quadratic algorithm---boo!
 (define set-diff

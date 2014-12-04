@@ -64,6 +64,10 @@
 (run-mh 100 (q) (fresh (r) (uniform 0.0 0.4 r) (uniform r 1.0 q) (fresh (x) (== x #t) (flip q x))))
 
 
+(run-mh 100 (q)
+  (conde
+    ((== q 1))
+    ((== q 2))))
 
 
 #!eof
