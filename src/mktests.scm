@@ -1,6 +1,75 @@
 (load "mk.scm")
 (load "test-check.scm")
 
+(define mean
+  (lambda (ls)
+    (exact->inexact (/ (apply + ls) (length ls)))))
+
+
+(define one-or-two
+  (lambda (x)
+    (conde
+      ((== 1 x))
+      ((== 2 x)))))
+
+
+(define geom 
+  (lambda (x n)
+    (conde
+      ((== n x))
+      ((geom x (add1 n))))))
+
+(define geom2/3
+  (lambda (x n)
+    (conde
+      ((== n x))
+      ((== n x))
+      ((geom2/3 x (add1 n))))))
+
+(define geom2/3b
+  (lambda (x n)
+    (conde
+      ((== n x))      
+      ((geom2/3b x (add1 n)))
+      ((geom2/3b x (add1 n))))))
+
+
+(run-mh 1 (q) (== #f #f))
+
+(run-mh 2 (q) (== #f #f))
+
+(run-mh 100 (q) (== #f #f))
+
+(run-mh 1 (q)
+  (conde
+    ((== #f #f))
+    ((== #t #t))))
+
+(run-mh 2 (q)
+  (conde
+    ((== #f #f))
+    ((== #t #t))))
+
+(run-mh 1 (q) (== 0.5 q) (flip q #t))
+
+(run-mh 2 (q) (== 0.5 q) (flip q #t))
+
+(run-mh 100 (q) (== 0.5 q) (flip q #t))
+
+
+(run-mh 1 (q) (fresh (r) (uniform 0.0 0.4 r) (uniform r 1.0 q) (fresh (x) (== x #t) (flip q x))))
+
+(run-mh 2 (q) (fresh (r) (uniform 0.0 0.4 r) (uniform r 1.0 q) (fresh (x) (== x #t) (flip q x))))
+
+(run-mh 100 (q) (fresh (r) (uniform 0.0 0.4 r) (uniform r 1.0 q) (fresh (x) (== x #t) (flip q x))))
+
+
+
+
+#!eof
+
+;; run and run* are now deprecated
+
 ;; Example run can be found in comments for the non-deterministic
 ;; tests below
 
@@ -302,11 +371,6 @@
   #t)
 ;; val: (1 2 5 5 6 5 6 5 6 6 5 6 5 5 5 4 4 1 1 2)
 
-(define one-or-two
-  (lambda (x)
-    (conde
-      ((== 1 x))
-      ((== 2 x)))))
 
 (test "15a"
   (let ((val (run 20 (q)
@@ -318,12 +382,6 @@
   #t)
 ;; val: (1 1 1 1 1 1 2 2 1 1 2 1 1 2 1 1 2 2 1 1)
 
-(define geom 
-  (lambda (x n)
-    (conde
-      ((== n x))
-      ((geom x (add1 n))))))
-
 (test "16a"
   (let ((val (run 50 (q)
                (geom q 0))))
@@ -334,9 +392,6 @@
   #t)
 ;; val: (0 0 2 0 0 0 0 0 0 0 0 2 4 2 2 1 3 0 0 0 9 6 7 4 3 1 0 1 1 0 1 3 1 1 1 2 1 1 3 1 1 1 1 2 2 2 2 7 5 5)
 
-(define mean
-  (lambda (ls)
-    (exact->inexact (/ (apply + ls) (length ls)))))
 
 
 ;;; both should be around 1.0
@@ -344,49 +399,6 @@
 
 (mean (run 10000 (q) (geom q 0)))
 
-
-
-
-(define geom2/3
-  (lambda (x n)
-    (conde
-      ((== n x))
-      ((== n x))
-      ((geom2/3 x (add1 n))))))
-
-(mean (run 1000 (q) (geom2/3 q 0)))
-
-(define geom2/3b
-  (lambda (x n)
-    (conde
-      ((== n x))      
-      ((geom2/3b x (add1 n)))
-      ((geom2/3b x (add1 n))))))
-
 (mean (run 1000 (q) (geom2/3b q 0)))
 
-
-
-(run-mh 1 (q) (== #f #f))
-
-(run-mh 2 (q) (== #f #f))
-
-(run-mh 100 (q) (== #f #f))
-
-(run-mh 1 (q)
-  (conde
-    ((== #f #f))
-    ((== #t #t))))
-
-(run-mh 1 (q) (== 0.5 q) (flip q #t))
-
-(run-mh 2 (q) (== 0.5 q) (flip q #t))
-
-(run-mh 100 (q) (== 0.5 q) (flip q #t))
-
-
-(run-mh 1 (q) (fresh (r) (uniform 0.0 0.4 r) (uniform r 1.0 q) (fresh (x) (== x #t) (flip q x))))
-
-(run-mh 2 (q) (fresh (r) (uniform 0.0 0.4 r) (uniform r 1.0 q) (fresh (x) (== x #t) (flip q x))))
-
-(run-mh 100 (q) (fresh (r) (uniform 0.0 0.4 r) (uniform r 1.0 q) (fresh (x) (== x #t) (flip q x))))
+(mean (run 1000 (q) (geom2/3 q 0)))

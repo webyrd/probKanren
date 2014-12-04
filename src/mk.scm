@@ -167,10 +167,8 @@
 
 ;; TODO
 ;;
-;; need to repackage the sk/c list in terms of rp's
-;;
-;; might also need to be able to invoke a special fk if the
-;; constraints introduced result in a low probability trace
+;; might need to invoke a special fk if the constraints introduced
+;; result in a low probability trace
 ;;
 ;; probably need to pass some or all of the sampled values to the
 ;; continuation when backtracking above a conde, so we can re-use as
@@ -251,14 +249,10 @@
       (let ((rp (make-rp flip-sample flip-log-density x p)))
         (sk fk (ext-rp-ls rp c))))))
 
-;; TODO
-;;
-;; keep track of the extension to the original substitution caused by
-;; sampling
 (define solve-rp-constraints
   ;; fake goal that runs last in run-mh  
   (lambda (sk fk c)
-    (printf "solve-rp-constraints c: ~s\n" c)
+;    (printf "solve-rp-constraints c: ~s\n" c)
     (let loop ((rp-ls (get-rp-ls c))
                (s (get-s c)))
       (cond
@@ -301,18 +295,6 @@
        (and (ground? (car t)) (ground? (cdr t)))]
       [else #t])))
 
-
-(define retry
-  (lambda (fk c)
-    (let ((sk/c-ls (get-sk/c-ls c)))
-      (if (null? sk/c-ls)
-          (fk)
-          (let ((pick (random (length sk/c-ls))))
-            (let ((sk/c (list-ref sk/c-ls pick)))
-              (let ((sk (car sk/c))
-                    (c (cadr sk/c)))
-                (sk fk c))))))))
-
 (define find-rp-info
   (lambda (x rp-ls)
     (cond
@@ -326,7 +308,10 @@
     (let ((c (car c/old-s))
 	  (old-s (cadr c/old-s)))
       (cond
-       [(null? s-prefix) c/old-s]
+       [(null? s-prefix) ;; there are no rps for us to sample
+        ;; R and F are reverse and forward transition probabilities
+        (let ((R 0.0) (F 0.0))
+          (list c/old-s R F))]
        [else
 	(let ((index-s-prefix (random (length s-prefix))))
 	  (let ((pr (list-ref s-prefix index-s-prefix)))
@@ -336,46 +321,18 @@
                   (let ((rp-info (find-rp-info x rp-ls)))
                     (let ((resample-proc (car rp-info))
                           (args (cdddr rp-info)))
-                      (let ((val (apply resample-proc (walk* args (append new-s-prefix old-s)))))
-                        (let ((s (append (cons (cons x val) new-s-prefix) old-s)))
-                          (list (update-s s c)
-                                old-s))))))))))]))))
-
-
-(define-syntax run*
-  (syntax-rules ()
-    [(_ (x) g g* ...)
-     (let ((x (var 'x)))
-       ((fresh () g g* ...)
-        (lambda (fk c)
-          (cons (reify x (get-s c)) (fk)))
-        (lambda () '())
-        empty-c))]))
-
-(define-syntax run
-  (syntax-rules ()
-    [(_ ne (x) g g* ...)
-     (let ((n ne)
-           (x (var 'x)))
-       (let ((ans ((fresh () g g* ...)
-                   (lambda (fk c)
-                     (list fk c))
-                   (lambda () '())
-                   empty-c)))
-         (let loop ((n n)
-                    (ans ans)
-                    (ls '()))
-           (cond
-             ((zero? n) (reverse ls))
-             ((null? ans) (reverse ls))
-             (else
-              (let ((fk (car ans))
-                    (c (cadr ans)))
-                (let ((s (get-s c)))
-                  (loop
-                    (sub1 n)
-                    (retry fk c)
-                    (cons (reify x s) ls)))))))))]))
+                      (let ((density-proc (cadr rp-info))
+                            (x/args (cddr rp-info)))
+                        (let ((R (let ((s (get-s c)))
+                                   (apply density-proc (walk* x/args s)))))
+                          (let ((val (apply resample-proc
+                                            (walk* args (append new-s-prefix old-s)))))
+                            (let ((s (append (cons (cons x val) new-s-prefix) old-s)))
+                              (let ((F (apply density-proc (walk* x/args s))))
+                                (list (list (update-s s c)
+                                            old-s)
+                                      R
+                                      F)))))))))))))]))))
 
 (define get-subst-prefix
   (lambda (s-old s-new)
@@ -384,13 +341,7 @@
      [else (cons (car s-new)
 		 (get-subst-prefix s-old
 				   (cdr s-new)))])))
-;; TODO
-;;
-;; needs to do resampling: keeping track of the extension to the
-;; original substitution produced by sampling in solve-rp-constraints
-;;
-;; calculate log densities of rps to figure out whether to keep the
-;; old substitution or the new substitution to answer the query
+
 (define-syntax run-mh
   (syntax-rules ()
     [(_ ne (x) g g* ...)
@@ -414,33 +365,60 @@
 		      (old-s (cadr c/old-s)))
 		  (let ((s (get-s c)))
 		    (let ((s-prefix (get-subst-prefix old-s s)))
-		      (loop
-		       (sub1 n)
-                       (let ((c/old-s^ (resample s-prefix fk c/old-s)))
-                         (if (reject-sample? c/old-s^ c/old-s)
-                             (list fk c/old-s)     ;; do we really need this fk?
-                             (list fk c/old-s^)))  ;; do we really need this fk?
-		       (cons (reify x s) ls)))))))))))]))
+                      (loop
+                       (sub1 n)
+                       (if (null? s-prefix)
+                           '()
+                           (let ((c/old-s^/R/F (resample s-prefix fk c/old-s)))
+                             (let ((c/old-s^ (car c/old-s^/R/F))
+                                   (R (cadr c/old-s^/R/F))
+                                   (F (caddr c/old-s^/R/F)))
+                               (if (reject-sample? c/old-s^ c/old-s R F)
+                                   (list fk c/old-s) ;; do we really need this fk?
+                                   (list fk c/old-s^)))))
+                        ;; do we really need this fk?
+                       (cons (reify x s) ls)))))))))))]))
 
 (define reject-sample?
-  (lambda (c/old-s^ c/old-s)
+  (lambda (c/old-s^ c/old-s R F)
     (let ((c^ (car c/old-s^))
           (old-s^ (cadr c/old-s^))
           (c (car c/old-s))
 	  (old-s (cadr c/old-s)))
       (let ((rp-ls^ (get-rp-ls c^))
             (rp-ls (get-rp-ls c)))
-        (let ((mproc (lambda (c)
-                       (lambda (rp-info)
-                         (let ((proc (cadr rp-info))
-                               (x/args (cddr rp-info)))
-                           (apply proc (walk* x/args (get-s c))))))))
+        (let ((mproc
+               ;; mproc takes a constraint store and an rp, and
+               ;; calculates the log probability of that rp
+               (lambda (c)
+                 (lambda (rp-info)
+                   (let ((density-proc (cadr rp-info))
+                         (x/args (cddr rp-info)))
+                     (apply density-proc (walk* x/args (get-s c))))))))
+          ;; The 'let' below corresponds to line 12 of Figure 2 from
+          ;; page 3 of 'Lightweight Implementations of Probabilistic
+          ;; Programming Languages Via Transformational'
+          ;; (http://web.stanford.edu/~ngoodman/papers/lightweight-mcmc-aistats2011.pdf)
+          ;;
+          ;; D and D' are equivalent to rp and rp^          
           (let ((ll^ (apply + (map (mproc c^) rp-ls^)))
-                (ll (apply + (map (mproc c) rp-ls))))
+                (ll (apply + (map (mproc c) rp-ls)))                
+                (rp-len^ (log (length rp-ls^)))
+                (rp-len (log (length rp-ls)))
+                (ll-stale (apply + (map (mproc c) (set-diff rp-ls rp-ls^))))
+                (ll-fresh (apply + (map (mproc c) (set-diff rp-ls^ rp-ls)))))
             (let ((u (random 1.0)))
               (> (log u)
-                 ;; TODO will need another term and some bookkeeping here
-                 (+ (- ll^ ll) (- (length rp-ls^) (length rp-ls)))))))))))
+                 ;; intuitively, new - old...
+                 (+ (- ll^ ll) (- R F) (- rp-len^ rp-len) (- ll-stale ll-fresh))))))))))
+
+;; quadratic algorithm---boo!
+(define set-diff
+  ;; subtract the elements of s2 from s1
+  (lambda (s1 s2)
+    (cond
+      ((null? s2) s1)
+      (else (set-diff (remq (car s2) s1) (cdr s2))))))
 
 (define reify-s
   (lambda (v s)
@@ -480,3 +458,57 @@
 ;; (run 1 (q) (flip 0.999999 q) (flip 0.00001 q))
 ;;
 ;; Are these equivalent?  Does this make sense?
+
+
+#!eof
+
+;; Standard miniKanren run/run* is now deprecated.  Need to implement
+;; run using the approach in Ken and Oleg's 'Monolingual Probabilistic
+;; Programming Using Generalized Coroutines'
+;; (http://okmij.org/ftp/kakuritu/#uai2009)
+
+(define-syntax run*
+  (syntax-rules ()
+    [(_ (x) g g* ...)
+     (let ((x (var 'x)))
+       ((fresh () g g* ...)
+        (lambda (fk c)
+          (cons (reify x (get-s c)) (fk)))
+        (lambda () '())
+        empty-c))]))
+
+(define-syntax run
+  (syntax-rules ()
+    [(_ ne (x) g g* ...)
+     (let ((n ne)
+           (x (var 'x)))
+       (let ((ans ((fresh () g g* ...)
+                   (lambda (fk c)
+                     (list fk c))
+                   (lambda () '())
+                   empty-c)))
+         (let loop ((n n)
+                    (ans ans)
+                    (ls '()))
+           (cond
+             ((zero? n) (reverse ls))
+             ((null? ans) (reverse ls))
+             (else
+              (let ((fk (car ans))
+                    (c (cadr ans)))
+                (let ((s (get-s c)))
+                  (loop
+                    (sub1 n)
+                    (retry fk c)
+                    (cons (reify x s) ls)))))))))]))
+
+(define retry
+  (lambda (fk c)
+    (let ((sk/c-ls (get-sk/c-ls c)))
+      (if (null? sk/c-ls)
+          (fk)
+          (let ((pick (random (length sk/c-ls))))
+            (let ((sk/c (list-ref sk/c-ls pick)))
+              (let ((sk (car sk/c))
+                    (c (cadr sk/c)))
+                (sk fk c))))))))
