@@ -137,7 +137,7 @@
 
 (define ==
   (lambda (u v)
-    (lambda (sk fk c)
+    (trace-lambda '== (sk fk c)
       (let ((s (get-s c)))
         (let ((s (unify u v s)))
           (if s
@@ -173,6 +173,23 @@
 ;; probably need to pass some or all of the sampled values to the
 ;; continuation when backtracking above a conde, so we can re-use as
 ;; much of the sample information as possible.
+
+
+;; TODO 12/4/2014
+;;
+;; revert to the original shorter definition of conde
+;;
+;; handle conde and rp's differently
+;;
+;; resampling will choose uniformly between the rp's and the
+;; conde-related sk's stored in c
+;;
+;; need to save the number of conde clauses in the sk/c list, so we
+;; can take the log probabilities
+;;
+;; ultimately want to handle conde and rp's uniformly if possible.
+;; need to figure out how to make the types match for that to happen
+
 #|
 (define-syntax conde
   (syntax-rules ()
@@ -206,11 +223,14 @@
                                                    (conde-density
                                                     (lambda (x-ignored)
                                                       (log (/ (length g-ls))))))
-                                               (let ((rp (make-rp make-conde-sample conde-density 'x-ignore-from-conde)))
+                                               (let ((rp (make-rp make-conde-sample
+                                                                  conde-density
+                                                                  'x-ignore-from-conde)))
                                                  (let ((c^ (ext-sk/c-ls sk^ c^)))
                                                    (let ((c^ (ext-rp-ls rp c^)))
-                                                     (let ((g (list-ref g-ls (random (length g-ls)))))
-                                                       (cons c^ g)))))))))
+                                                     (let ((index (random (length g-ls))))
+                                                       (let ((g (list-ref g-ls index)))
+                                                         (cons c^ g))))))))))
                            (let ((c^/g (c^/g-th)))
                              (let ((c^ (car c^/g))
                                    (g (cdr c^/g)))
@@ -252,7 +272,6 @@
 (define solve-rp-constraints
   ;; fake goal that runs last in run-mh  
   (lambda (sk fk c)
-;    (printf "solve-rp-constraints c: ~s\n" c)
     (let loop ((rp-ls (get-rp-ls c))
                (s (get-s c)))
       (cond
@@ -306,22 +325,15 @@
 (define resample
   (lambda (rp-ls fk c)
     (let ((rp (list-ref rp-ls (random (length rp-ls)))))
-      ;; (printf "rp 1: ~s\n" rp)
       (let ((resample-proc (car rp))
             (args (cdddr rp)))
-        ;; (printf "args: ~s\n" args)
         (let ((density-proc (cadr rp))
               (x/args (cddr rp)))
-          ;; (printf "x/args: ~s\n" x/args)
           (let ((x (car x/args)))
-            ;; (printf "x: ~s\n" x)
             (let ((s (get-s c)))
-              ;; (printf "s: ~s\n" s)
               (let ((R (apply density-proc (walk* x/args s))))
-                ;; (printf "R: ~s\n" R)
                 (let ((s-x (remove-from-s x s)))
                   (let ((val (apply resample-proc (walk* args s-x))))
-                    ;; (printf "val: ~s\n" val)
                     (let ((s (cons (cons x val) s-x)))
                       (let ((F (apply density-proc (walk* x/args s))))
                         (list (update-s s c)
@@ -340,17 +352,12 @@
     (let ((s-old (get-s c))
           (rp-ls (get-rp-ls c)))
       (let ((s-prefix (get-subst-prefix s-old s)))
-        ;; (printf "s-prefix: ~s\n" s-prefix)
         (let loop ((rp-ls rp-ls)
                    (acc '()))
           (cond
-            ((null? rp-ls)
-             ;; (printf "acc: ~s\n" acc)
-             acc)
+            ((null? rp-ls) acc)
             (else (let ((rp (car rp-ls)))
-;                    (printf "rp: ~s\n" rp)
                     (let ((x (caddr rp)))
-;                      (printf "x: ~s\n" x)
                       (cond
                         ((eq? 'x-ignore-from-conde x)
                          (loop (cdr rp-ls) (cons rp acc)))
@@ -365,7 +372,6 @@
      [else (cons (car s-new)
 		 (get-subst-prefix s-old
 				   (cdr s-new)))])))
-
 
 (define-syntax run-mh
   (syntax-rules ()
@@ -386,24 +392,20 @@
              (else
               (let ((fk (car ans))
                     (c/rp-ls (cadr ans)))
-                ;; (printf "c/rp-ls: ~s\n" c/rp-ls)
                 (let ((c (car c/rp-ls))
                       (rp-ls (cadr c/rp-ls)))
-                  ;; (printf "cdr of c/rp-ls: ~s\n" (cdr c/rp-ls))
-                  ;; (printf "rp-ls run-mh: ~s\n" rp-ls)
                   (loop
                    (sub1 n)
-                   (if (null? rp-ls)
+                   (if (null? rp-ls)                       
                        ans
                        (let ((c^/R/F (resample rp-ls fk c)))
                          (let ((c^ (car c^/R/F))
                                (R (cadr c^/R/F))
-                               (F (caddr c^/R/F)))                                                    
+                               (F (caddr c^/R/F)))                           
                            (if (reject-sample? c^ c R F)
                                (list fk c/rp-ls) ;; do we really need this fk?
                                (list fk (list c^ rp-ls)) ;; do we really need this fk?
-                               )
-                           )))
+                               ))))
                    (cons (reify x (get-s c)) ls)))))))))]))
 
 (define reject-sample?
