@@ -399,11 +399,11 @@
 
 
 ;;; both should be around 1.0
-(mean (apply append (map (lambda (?) (run 1 (q) (geom q 0))) (make-list 10000))))
+(mean (apply append (map (lambda (?) (run-mh 1 (q) (geom q 0))) (make-list 10000))))
 
-(mean (run 10000 (q) (geom q 0)))
+(mean (run-mh 10000 (q) (geom q 0)))
 
-(mean (run 1000 (q) (geom2/3b q 0)))
+(mean (run-mh 1000 (q) (geom2/3b q 0)))
 
 (run-mh 1 (q) (== #f #f))
 
