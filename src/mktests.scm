@@ -34,6 +34,11 @@
       ((geom2/3b x (add1 n))))))
 
 
+(run-mh 100 (q)
+  (conde
+    ((uniform 0.0 2.0 q))
+    ((uniform 5.0 7.0 q))))
+
 (run-mh 1 (q) (== #f #f))
 
 (run-mh 2 (q) (== #f #f))
