@@ -13,7 +13,7 @@
       ((== 2 x)))))
 
 
-(define geom 
+(define geom
   (lambda (x n)
     (conde
       ((== n x))

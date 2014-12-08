@@ -22,9 +22,9 @@
 
 
 (define empty-s '())
-(define empty-sk/c-ls '())
+(define empty-sk/c/conde-size-ls '())
 (define empty-rp-ls '())
-(define empty-c `(,empty-s ,empty-sk/c-ls  ,empty-rp-ls))
+(define empty-c `(,empty-s ,empty-sk/c/conde-size-ls  ,empty-rp-ls))
 
 (define make-rp list)
 
@@ -48,37 +48,44 @@
   (lambda (c)
     (car c)))
 
-(define get-sk/c/len-ls
+(define get-sk/c/conde-size-ls
   (lambda (c)
     (cadr c)))
+
+(define get-conde-size-ls
+  (lambda (c)
+    (let ((sk/c/conde-size-ls (get-sk/c/conde-size-ls c)))
+      (if (null? sk/c/conde-size-ls)
+          '()
+          (caddr sk/c/conde-size-ls)))))
 
 (define get-rp-ls
   (lambda (c)
     (caddr c)))
 
-;; save the sk/c/len for each conde encountered
+;; save the sk/c/conde-size for each conde encountered
 ;;
-;; 'len' is the number of conde clauses, which we use to calculate the
-;; log probabilities
-(define ext-sk/c/len-ls
-  (lambda (sk c len)
+;; 'conde-size' is the number of conde clauses, which we use to
+;; calculate the log probabilities
+(define ext-sk/c/conde-size-ls
+  (lambda (sk c conde-size)
     (let ((s (get-s c))
-          (sk/c/len-ls (get-sk/c/len-ls c))
+          (sk/c/conde-size-ls (get-sk/c/conde-size-ls c))
           (rp-ls (get-rp-ls c)))
-      `(,s ((,sk ,c ,len) . ,sk/c/len-ls) ,rp-ls))))
+      `(,s ((,sk ,c ,conde-size) . ,sk/c/conde-size-ls) ,rp-ls))))
 
 (define ext-rp-ls
   (lambda (rp c)
     (let ((s (get-s c))
-          (sk/c/len-ls (get-sk/c/len-ls c))
+          (sk/c/conde-size-ls (get-sk/c/conde-size-ls c))
 	  (rp-ls (get-rp-ls c)))
-      `(,s ,sk/c/len-ls ,(cons rp rp-ls)))))
+      `(,s ,sk/c/conde-size-ls ,(cons rp rp-ls)))))
 
 (define update-s
   (lambda (s c)
-    (let ((sk/c/len-ls (get-sk/c/len-ls c))
+    (let ((sk/c/conde-size-ls (get-sk/c/conde-size-ls c))
 	  (rp-ls (get-rp-ls c)))
-      `(,s ,sk/c/len-ls ,rp-ls))))
+      `(,s ,sk/c/conde-size-ls ,rp-ls))))
 
 
 (define ext-s
@@ -141,7 +148,7 @@
 
 (define ==
   (lambda (u v)
-    (trace-lambda '== (sk fk c)
+    (lambda (sk fk c)
       (let ((s (get-s c)))
         (let ((s (unify u v s)))
           (if s
@@ -197,9 +204,9 @@
                        (let ((g-ls (list (conj* g0 g0* ...)
                                          (conj* g* g** ...)
                                          ...)))
-                         (let ((len (length g-ls)))
-                           (let ((g (list-ref g-ls (random len))))
-                             (let ((c^ (ext-sk/c/len-ls sk^ c^ len)))
+                         (let ((conde-size (length g-ls)))
+                           (let ((g (list-ref g-ls (random conde-size))))
+                             (let ((c^ (ext-sk/c/conde-size-ls sk^ c^ conde-size)))
                                (g sk fk^ c^))))))))
          (sk^ fk c)))]))
 
@@ -375,6 +382,36 @@
 
 (define reject-sample?
   (lambda (c^ c R F)
+    (let-values ([(ll-rp
+                   ll-rp^
+                   rp-len
+                   rp-len^
+                   ll-rp-stale
+                   ll-rp-fresh)
+                  (calculate-rp-ls-likelihoods c c^)]
+                 [(log-conde-size-ls
+                   log-conde-size-ls^
+                   conde-size-ls-len
+                   conde-size-ls-len^
+                   ll-conde-stale
+                   ll-conde-fresh)
+                  (calculate-conde-size-ls-likelihoods c c^)])
+      (let ((ll (+ ll-rp log-conde-size-ls))
+            (ll^ (+ ll-rp^ log-conde-size-ls^))
+            (rp-len (log (+ rp-len conde-size-ls-len)))
+            (rp-len^ (log (+ rp-len^ conde-size-ls-len^)))
+            (ll-stale (+ ll-rp-stale ll-conde-stale))
+            (ll-fresh (+ ll-rp-fresh ll-conde-fresh)))
+        (let ((u (random 1.0)))
+          (> (log u)
+             ;; intuitively, new - old...
+             (+ (- ll^ ll)
+                (- R F)
+                (- rp-len^ rp-len)
+                (- ll-stale ll-fresh))))))))
+
+(define calculate-rp-ls-likelihoods
+  (lambda (c c^)
     (let ((rp-ls^ (get-rp-ls c^))
           (rp-ls (get-rp-ls c)))
       (let ((mproc
@@ -390,17 +427,68 @@
         ;; Programming Languages Via Transformational'
         ;; (http://web.stanford.edu/~ngoodman/papers/lightweight-mcmc-aistats2011.pdf)
         ;;
-        ;; D and D' are equivalent to rp and rp^          
-        (let ((ll^ (apply + (map (mproc c^) rp-ls^)))
-              (ll (apply + (map (mproc c) rp-ls)))                
-              (rp-len^ (log (length rp-ls^)))
-              (rp-len (log (length rp-ls)))
+        ;; D and D' are equivalent to rp and rp^
+        (let ((ll (apply + (map (mproc c) rp-ls)))
+              (ll^ (apply + (map (mproc c^) rp-ls^)))
+              (rp-len (length rp-ls))
+              (rp-len^ (length rp-ls^))
               (ll-stale (apply + (map (mproc c) (set-diff rp-ls rp-ls^))))
               (ll-fresh (apply + (map (mproc c) (set-diff rp-ls^ rp-ls)))))
-          (let ((u (random 1.0)))
-            (> (log u)
-               ;; intuitively, new - old...
-               (+ (- ll^ ll) (- R F) (- rp-len^ rp-len) (- ll-stale ll-fresh)))))))))
+          (values
+           ll
+           ll^
+           rp-len
+           rp-len^
+           ll-stale
+           ll-fresh))))))
+
+(define calculate-conde-size-ls-likelihoods
+  (lambda (c c^)
+    (let ((conde-size-ls^ (get-conde-size-ls c^))
+          (conde-size-ls (get-conde-size-ls c)))
+      (let ((calc-conde-size-log (lambda (conde-size-ls)
+                                   (apply +
+                                          (map
+                                           (lambda (conde-size) (log (/ conde-size)))
+                                           conde-size-ls)))))
+        (let ((log-conde-size-ls^ (calc-conde-size-log conde-size-ls^))
+              (log-conde-size-ls (calc-conde-size-log conde-size-ls)))
+          (let ((stale-conde-size-ls/fresh-conde-size-ls
+                 (partition-stale/fresh-conde-size-ls-by-sk c c^)))
+            (let ((stale-conde-size-ls (car stale-conde-size-ls/fresh-conde-size-ls))
+                  (fresh-conde-size-ls (cadr stale-conde-size-ls/fresh-conde-size-ls)))
+              (let ((ll-conde-stale (calc-conde-size-log stale-conde-size-ls))
+                    (ll-conde-fresh (calc-conde-size-log fresh-conde-size-ls)))
+                (let ((conde-size-ls-len (length conde-size-ls))
+                      (conde-size-ls-len^ (length conde-size-ls^)))
+                  (values
+                    log-conde-size-ls
+                    log-conde-size-ls^
+                    conde-size-ls-len
+                    conde-size-ls-len^
+                    ll-conde-stale
+                    ll-conde-fresh))))))))))
+
+
+;; returns stale-conde-size-ls/fresh-conde-size-ls
+(define partition-stale/fresh-conde-size-ls-by-sk
+  (lambda (c cˆ)
+    (let ((sk/c/conde-size-ls (get-sk/c/conde-size-ls c))
+          (sk/c/conde-size-lsˆ (get-sk/c/conde-size-ls cˆ)))
+      (let ((set-diff-proc (lambda (elem2)
+                             (lambda (elem1)
+                               (eq? (car elem1) (car elem2))))))
+        (let ((stale (set-diff-by-proc
+                      sk/c/conde-size-ls
+                      sk/c/conde-size-lsˆ
+                      set-diff-proc))
+              (fresh (set-diff-by-proc
+                      sk/c/conde-size-lsˆ
+                      sk/c/conde-size-ls
+                      set-diff-proc)))
+          (let ((conde-size-ls-stale (map caddr stale))
+                (conde-size-ls-fresh (map caddr fresh)))
+            (list conde-size-ls-stale conde-size-ls-fresh)))))))
 
 ;; quadratic algorithm---boo!
 (define set-diff
@@ -409,6 +497,16 @@
     (cond
       ((null? s2) s1)
       (else (set-diff (remq (car s2) s1) (cdr s2))))))
+
+(define set-diff-by-proc
+  (lambda (s1 s2 p)
+    (cond
+      ((null? s2) s1)
+      (else
+       (set-diff-by-proc
+         (remp (p (car s2)) s1)
+         (cdr s2)
+         p)))))
 
 (define reify-s
   (lambda (v s)
