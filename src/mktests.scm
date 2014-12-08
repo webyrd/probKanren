@@ -446,3 +446,14 @@
       (fresh (x)
 	(== x #t)
 	(flip q x))))
+
+
+;; interesting test--what does this mean?
+;;
+;; (run 1 (q) (flip 0.00001 q) (flip 0.999999 q))
+;;
+;; vs.
+;;
+;; (run 1 (q) (flip 0.999999 q) (flip 0.00001 q))
+;;
+;; Are these equivalent?  Does this make sense?

@@ -48,7 +48,7 @@
   (lambda (c)
     (car c)))
 
-(define get-sk/c-ls
+(define get-sk/c/len-ls
   (lambda (c)
     (cadr c)))
 
@@ -56,25 +56,25 @@
   (lambda (c)
     (caddr c)))
 
-(define ext-sk/c-ls
-  (lambda (sk c)
+(define ext-sk/c/len-ls
+  (lambda (sk c len)
     (let ((s (get-s c))
-          (sk/c-ls (get-sk/c-ls c))
+          (sk/c/len-ls (get-sk/c/len-ls c))
           (rp-ls (get-rp-ls c)))
-      `(,s ((,sk ,c) . ,sk/c-ls) ,rp-ls))))
+      `(,s ((,sk ,c ,len) . ,sk/c/len-ls) ,rp-ls))))
 
 (define ext-rp-ls
   (lambda (rp c)
     (let ((s (get-s c))
-          (sk/c-ls (get-sk/c-ls c))
+          (sk/c/len-ls (get-sk/c/len-ls c))
 	  (rp-ls (get-rp-ls c)))
-      `(,s ,sk/c-ls ,(cons rp rp-ls)))))
+      `(,s ,sk/c/len-ls ,(cons rp rp-ls)))))
 
 (define update-s
   (lambda (s c)
-    (let ((sk/c-ls (get-sk/c-ls c))
+    (let ((sk/c/len-ls (get-sk/c/len-ls c))
 	  (rp-ls (get-rp-ls c)))
-      `(,s ,sk/c-ls ,rp-ls))))
+      `(,s ,sk/c/len-ls ,rp-ls))))
 
 
 (define ext-s
@@ -190,6 +190,20 @@
 ;; ultimately want to handle conde and rp's uniformly if possible.
 ;; need to figure out how to make the types match for that to happen
 
+(define-syntax conde
+  (syntax-rules ()
+    [(_ (g0 g0* ...) (g* g** ...) ...)
+     (lambda (sk fk c)
+       (letrec ((sk^ (lambda (fk^ c^)
+                       (let ((g-ls (list (conj* g0 g0* ...)
+                                         (conj* g* g** ...)
+                                         ...)))
+                         (let ((len (length g-ls)))
+                           (let ((g (list-ref g-ls (random len))))
+                             (let ((c^ (ext-sk/c/len-ls sk^ c^ len)))
+                               (g sk fk^ c^))))))))
+         (sk^ fk c)))]))
+
 #|
 (define-syntax conde
   (syntax-rules ()
@@ -205,6 +219,7 @@
          (sk^ fk c)))]))
 |#
 
+#|
 (define-syntax conde
   (syntax-rules ()
     [(_ (g0 g0* ...) (g* g** ...) ...)
@@ -236,7 +251,7 @@
                                    (g (cdr c^/g)))
                                (g sk fk^ c^))))))))
          (sk^ fk c)))]))
-
+|#
 
 (define uniform-sample
   (lambda (lo hi)
@@ -472,68 +487,3 @@
 (define fail
   (lambda (sk fk c)
     (fk)))
-
-
-;; interesting test--what does this mean?
-;;
-;; (run 1 (q) (flip 0.00001 q) (flip 0.999999 q))
-;;
-;; vs.
-;;
-;; (run 1 (q) (flip 0.999999 q) (flip 0.00001 q))
-;;
-;; Are these equivalent?  Does this make sense?
-
-
-#!eof
-
-;; Standard miniKanren run/run* is now deprecated.  Need to implement
-;; run using the approach in Ken and Oleg's 'Monolingual Probabilistic
-;; Programming Using Generalized Coroutines'
-;; (http://okmij.org/ftp/kakuritu/#uai2009)
-
-(define-syntax run*
-  (syntax-rules ()
-    [(_ (x) g g* ...)
-     (let ((x (var 'x)))
-       ((fresh () g g* ...)
-        (lambda (fk c)
-          (cons (reify x (get-s c)) (fk)))
-        (lambda () '())
-        empty-c))]))
-
-(define-syntax run
-  (syntax-rules ()
-    [(_ ne (x) g g* ...)
-     (let ((n ne)
-           (x (var 'x)))
-       (let ((ans ((fresh () g g* ...)
-                   (lambda (fk c)
-                     (list fk c))
-                   (lambda () '())
-                   empty-c)))
-         (let loop ((n n)
-                    (ans ans)
-                    (ls '()))
-           (cond
-             ((zero? n) (reverse ls))
-             ((null? ans) (reverse ls))
-             (else
-              (let ((fk (car ans))
-                    (c (cadr ans)))
-                (let ((s (get-s c)))
-                  (loop
-                    (sub1 n)
-                    (retry fk c)
-                    (cons (reify x s) ls)))))))))]))
-
-(define retry
-  (lambda (fk c)
-    (let ((sk/c-ls (get-sk/c-ls c)))
-      (if (null? sk/c-ls)
-          (fk)
-          (let ((pick (random (length sk/c-ls))))
-            (let ((sk/c (list-ref sk/c-ls pick)))
-              (let ((sk (car sk/c))
-                    (c (cadr sk/c)))
-                (sk fk c))))))))
