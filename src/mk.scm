@@ -188,11 +188,6 @@
 
 ;; TODO 12/4/2014
 ;;
-;; handle conde and rp's differently
-;;
-;; resampling will choose uniformly between the rp's and the
-;; conde-related sk's stored in c
-;;
 ;; ultimately want to handle conde and rp's uniformly if possible.
 ;; need to figure out how to make the types match for that to happen
 
