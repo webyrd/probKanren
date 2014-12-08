@@ -56,6 +56,10 @@
   (lambda (c)
     (caddr c)))
 
+;; save the sk/c/len for each conde encountered
+;;
+;; 'len' is the number of conde clauses, which we use to calculate the
+;; log probabilities
 (define ext-sk/c/len-ls
   (lambda (sk c len)
     (let ((s (get-s c))
@@ -177,15 +181,10 @@
 
 ;; TODO 12/4/2014
 ;;
-;; revert to the original shorter definition of conde
-;;
 ;; handle conde and rp's differently
 ;;
 ;; resampling will choose uniformly between the rp's and the
 ;; conde-related sk's stored in c
-;;
-;; need to save the number of conde clauses in the sk/c list, so we
-;; can take the log probabilities
 ;;
 ;; ultimately want to handle conde and rp's uniformly if possible.
 ;; need to figure out how to make the types match for that to happen
@@ -203,55 +202,6 @@
                              (let ((c^ (ext-sk/c/len-ls sk^ c^ len)))
                                (g sk fk^ c^))))))))
          (sk^ fk c)))]))
-
-#|
-(define-syntax conde
-  (syntax-rules ()
-    [(_ (g0 g0* ...) (g* g** ...) ...)
-     (lambda (sk fk c)
-       (letrec ((sk^ (lambda (fk^ c^)
-                       (let ((g-ls (list (conj* g0 g0* ...)
-                                         (conj* g* g** ...)
-                                         ...)))
-                         (let ((g (list-ref g-ls (random (length g-ls)))))
-                           (let ((c^ (ext-sk/c-ls sk^ c^)))
-                             (g sk fk^ c^)))))))
-         (sk^ fk c)))]))
-|#
-
-#|
-(define-syntax conde
-  (syntax-rules ()
-    [(_ (g0 g0* ...) (g* g** ...) ...)
-     (lambda (sk fk c)
-       (letrec ((sk^ (lambda (fk^ c^)
-                       (let ((g-ls (list (conj* g0 g0* ...)
-                                         (conj* g* g** ...)
-                                         ...)))
-                         (letrec ((c^/g-th (lambda ()
-                                             (let ((make-conde-sample
-                                                    (lambda ()
-                                                      (let ((c^/g (c^/g-th)))
-                                                        (let ((c^ (car c^/g))
-                                                              (g (cdr c^/g)))
-                                                          (g sk fk^ c^)))))
-                                                   (conde-density
-                                                    (lambda (x-ignored)
-                                                      (log (/ (length g-ls))))))
-                                               (let ((rp (make-rp make-conde-sample
-                                                                  conde-density
-                                                                  'x-ignore-from-conde)))
-                                                 (let ((c^ (ext-sk/c-ls sk^ c^)))
-                                                   (let ((c^ (ext-rp-ls rp c^)))
-                                                     (let ((index (random (length g-ls))))
-                                                       (let ((g (list-ref g-ls index)))
-                                                         (cons c^ g))))))))))
-                           (let ((c^/g (c^/g-th)))
-                             (let ((c^ (car c^/g))
-                                   (g (cdr c^/g)))
-                               (g sk fk^ c^))))))))
-         (sk^ fk c)))]))
-|#
 
 (define uniform-sample
   (lambda (lo hi)

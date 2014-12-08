@@ -1,6 +1,57 @@
 ;;; old & obsolete code
 
 
+#|
+(define-syntax conde
+  (syntax-rules ()
+    [(_ (g0 g0* ...) (g* g** ...) ...)
+     (lambda (sk fk c)
+       (letrec ((sk^ (lambda (fk^ c^)
+                       (let ((g-ls (list (conj* g0 g0* ...)
+                                         (conj* g* g** ...)
+                                         ...)))
+                         (let ((g (list-ref g-ls (random (length g-ls)))))
+                           (let ((c^ (ext-sk/c-ls sk^ c^)))
+                             (g sk fk^ c^)))))))
+         (sk^ fk c)))]))
+|#
+
+#|
+(define-syntax conde
+  (syntax-rules ()
+    [(_ (g0 g0* ...) (g* g** ...) ...)
+     (lambda (sk fk c)
+       (letrec ((sk^ (lambda (fk^ c^)
+                       (let ((g-ls (list (conj* g0 g0* ...)
+                                         (conj* g* g** ...)
+                                         ...)))
+                         (letrec ((c^/g-th (lambda ()
+                                             (let ((make-conde-sample
+                                                    (lambda ()
+                                                      (let ((c^/g (c^/g-th)))
+                                                        (let ((c^ (car c^/g))
+                                                              (g (cdr c^/g)))
+                                                          (g sk fk^ c^)))))
+                                                   (conde-density
+                                                    (lambda (x-ignored)
+                                                      (log (/ (length g-ls))))))
+                                               (let ((rp (make-rp make-conde-sample
+                                                                  conde-density
+                                                                  'x-ignore-from-conde)))
+                                                 (let ((c^ (ext-sk/c-ls sk^ c^)))
+                                                   (let ((c^ (ext-rp-ls rp c^)))
+                                                     (let ((index (random (length g-ls))))
+                                                       (let ((g (list-ref g-ls index)))
+                                                         (cons c^ g))))))))))
+                           (let ((c^/g (c^/g-th)))
+                             (let ((c^ (car c^/g))
+                                   (g (cdr c^/g)))
+                               (g sk fk^ c^))))))))
+         (sk^ fk c)))]))
+|#
+
+
+
 ;; Standard miniKanren run/run* is now deprecated.  Need to implement
 ;; run using the approach in Ken and Oleg's 'Monolingual Probabilistic
 ;; Programming Using Generalized Coroutines'
