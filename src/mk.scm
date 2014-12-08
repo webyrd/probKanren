@@ -57,7 +57,7 @@
     (let ((sk/c/conde-size-ls (get-sk/c/conde-size-ls c)))
       (if (null? sk/c/conde-size-ls)
           '()
-          (caddr sk/c/conde-size-ls)))))
+          (map caddr sk/c/conde-size-ls)))))
 
 (define get-rp-ls
   (lambda (c)
@@ -296,6 +296,34 @@
 
 (define resample
   (lambda (rp-ls fk c)
+    (let ((sk/c/conde-size-ls (get-sk/c/conde-size-ls c)))
+      (let ((total-len (+ (length rp-ls) (length sk/c/conde-size-ls))))
+        (let ((ran (random total-len)))
+          (if (>= ran (length rp-ls))
+              (resample-conde fk sk/c/conde-size-ls)
+              (resample-rp rp-ls fk c)))))))
+
+(define resample-conde
+  (lambda (fk sk/c/conde-size-ls)
+    (let ((sk/c/conde-size (list-ref sk/c/conde-size-ls (random (length sk/c/conde-size-ls)))))
+      (let ((sk (car sk/c/conde-size))
+            (c (cadr sk/c/conde-size))
+            (conde-size (caddr sk/c/conde-size)))
+        ;; weird to return an 'ans' here!
+        (let ((ans (sk fk c)))
+          (if (null? ans)
+              ;; TODO -- what to do for the null? case?
+              (error 'resample-conde "what to do here?")
+              (let ((fk (car ans))
+                    (c/rp-ls (cadr ans)))
+                (let ((c (car c/rp-ls))
+                      (rp-ls (cadr c/rp-ls)))
+                  (list c
+                        0.0
+                        0.0)))))))))
+
+(define resample-rp
+  (lambda (rp-ls fk c)
     (let ((rp (list-ref rp-ls (random (length rp-ls)))))
       (let ((resample-proc (car rp))
             (args (cdddr rp)))
@@ -368,12 +396,12 @@
                       (rp-ls (cadr c/rp-ls)))
                   (loop
                    (sub1 n)
-                   (if (null? rp-ls)                       
+                   (if (and (null? rp-ls) (null? (get-sk/c/conde-size-ls c)))
                        ans
                        (let ((c^/R/F (resample rp-ls fk c)))
                          (let ((c^ (car c^/R/F))
                                (R (cadr c^/R/F))
-                               (F (caddr c^/R/F)))                           
+                               (F (caddr c^/R/F)))
                            (if (reject-sample? c^ c R F)
                                (list fk c/rp-ls) ;; do we really need this fk?
                                (list fk (list c^ rp-ls)) ;; do we really need this fk?
@@ -444,8 +472,8 @@
 
 (define calculate-conde-size-ls-likelihoods
   (lambda (c c^)
-    (let ((conde-size-ls^ (get-conde-size-ls c^))
-          (conde-size-ls (get-conde-size-ls c)))
+    (let ((conde-size-ls (get-conde-size-ls c))
+          (conde-size-ls^ (get-conde-size-ls c^)))
       (let ((calc-conde-size-log (lambda (conde-size-ls)
                                    (apply +
                                           (map
