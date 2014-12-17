@@ -426,6 +426,7 @@
             (ll-stale (+ ll-rp-stale ll-conde-stale))
             (ll-fresh (+ ll-rp-fresh ll-conde-fresh)))
         (let ((u (random 1.0)))
+	  (printf "ll-stale: ~s ll-fresh: ~s" ll-stale ll-fresh)
           (> (log u)
              ;; intuitively, new - old...
              (+ (- ll^ ll)
