@@ -504,7 +504,8 @@
                         )))
             (printf "log-u: ~s\n" log-u)
             (printf "sum: ~s\n" sum)
-            (> log-u sum)))))))
+            (or (nan? sum)
+		(> log-u sum))))))))
 
 (define calculate-rp-ls-likelihoods
   (lambda (c c^)
