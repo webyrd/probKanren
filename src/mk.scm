@@ -295,27 +295,51 @@
       (let ((total-len (+ (length rp-ls) (length sk/c/conde-size-ls))))
         (let ((ran (random total-len)))
           (if (>= ran (length rp-ls))
-              (resample-conde fk sk/c/conde-size-ls)
+              (resample-conde fk c sk/c/conde-size-ls)
               (resample-rp rp-ls fk c)))))))
 
+
+;; TODO figure out if these are the correct values of R and F
 (define resample-conde
-  (lambda (fk sk/c/conde-size-ls)
-    (let ((sk/c/conde-size (list-ref sk/c/conde-size-ls (random (length sk/c/conde-size-ls)))))
-      (let ((sk (car sk/c/conde-size))
-            (c (cadr sk/c/conde-size))
-            (conde-size (caddr sk/c/conde-size)))
-        ;; weird to return an 'ans' here!
-        (let ((ans (sk fk c)))
-          (if (null? ans)
-              ;; TODO -- what to do for the null? case?
-              (error 'resample-conde "what to do here?")
-              (let ((fk (car ans))
-                    (c/rp-ls (cadr ans)))
-                (let ((c (car c/rp-ls))
-                      (rp-ls (cadr c/rp-ls)))
-                  (list c
-                        0.0
-                        0.0)))))))))
+  (lambda (fk c sk/c/conde-size-ls)
+    (let ((ran (random (length sk/c/conde-size-ls))))
+      (let ((sk/c/conde-size (list-ref sk/c/conde-size-ls ran)))
+        (let ((sk-ran (car sk/c/conde-size))
+              (c-ran (cadr sk/c/conde-size)))
+          ;; weird to return an 'ans' here!
+          (let ((ans (sk-ran fk c-ran)))
+            (if (null? ans)
+                ;; TODO -- what to do for the null? case?
+                (error 'resample-conde "what to do here?")
+                (let ((fk (car ans))
+                      (c/rp-ls^ (cadr ans)))
+                  (let ((c^ (car c/rp-ls^))
+                        (rp-ls^ (cadr c/rp-ls^)))
+                    (printf "(get-conde-size-ls c^): ~s\n" (get-conde-size-ls c^))
+                    (printf "(get-conde-size-ls c): ~s\n" (get-conde-size-ls c))
+                    (list c^
+                          (let ((R (apply +
+                                          (map (lambda (n) (log (/ n)))
+                                               (get-conde-size-ls c)))))
+                            R) ;; R = reverse
+                          ;; prob of transitioning from c^ to c
+                          (let ((F (apply +
+                                          (map (lambda (n) (log (/ n)))
+                                               (get-conde-size-ls c^)))))
+                            F) ;; F = forward
+                          ;; prob of transitioning from c to c^
+                          ))))))))))
+
+
+#|
+;; return the first n elements of ls
+;; no longer used...
+(define list-prefix
+  (lambda (n ls)
+    (cond
+      [(zero? n) '()]
+      [else (cons (car ls) (list-prefix (sub1 n) (cdr ls)))])))
+|#
 
 (define resample-rp
   (lambda (rp-ls fk c)
@@ -398,8 +422,12 @@
                                (R (cadr c^/R/F))
                                (F (caddr c^/R/F)))
                            (if (reject-sample? c^ c R F)
-                               (list fk c/rp-ls) ;; do we really need this fk?
-                               (list fk (list c^ rp-ls)) ;; do we really need this fk?
+                               (begin
+                                 (printf "reject-sample => #t\n")
+                                 (list fk c/rp-ls)) ;; do we really need this fk?
+                               (begin
+                                 (printf "reject-sample => #f\n")
+                                 (list fk (list c^ rp-ls))) ;; do we really need this fk?
                                ))))
                    (cons (reify x (get-s c)) ls)))))))))]))
 
@@ -425,14 +453,23 @@
             (rp-len^ (log (+ rp-len^ conde-size-ls-len^)))
             (ll-stale (+ ll-rp-stale ll-conde-stale))
             (ll-fresh (+ ll-rp-fresh ll-conde-fresh)))
+        (printf "ll^: ~s\n" ll^)
+        (printf "ll: ~s\n" ll)
+        (printf "R: ~s\n" R)
+        (printf "F: ~s\n" F)
+        (printf "rp-len^: ~s\n" (exp rp-len^))
+        (printf "rp-len: ~s\n" (exp rp-len))
         (let ((u (random 1.0)))
-	  (printf "ll-stale: ~s ll-fresh: ~s" ll-stale ll-fresh)
-          (> (log u)
-             ;; intuitively, new - old...
-             (+ (- ll^ ll)
-                (- R F)
-                (- rp-len^ rp-len)
-                (- ll-stale ll-fresh))))))))
+          (printf "ll-stale: ~s\nll-fresh: ~s\n" ll-stale ll-fresh)
+          (let ((log-u (log u))
+                (sum (+ (- ll^ ll)
+                        (- R F)
+                        (- rp-len rp-len^)
+                        (- ll-stale ll-fresh)
+                        )))
+            (printf "log-u: ~s\n" log-u)
+            (printf "sum: ~s\n" sum)
+            (> log-u sum)))))))
 
 (define calculate-rp-ls-likelihoods
   (lambda (c c^)
@@ -550,7 +587,9 @@
 (define reify
   (lambda (v s)
     (let ((v (walk* v s)))
-      (walk* v (reify-s v empty-s)))))
+      (let ((v (walk* v (reify-s v empty-s))))
+        (printf "v: ~s\n\n" v)
+        v))))
 
 (define succeed
   (lambda (sk fk c)
@@ -559,3 +598,11 @@
 (define fail
   (lambda (sk fk c)
     (fk)))
+
+(define-syntax project
+  (syntax-rules ()
+    [(_ (x* ...) g)
+     (lambda (sk fk c)
+       (let ((s (get-s c)))
+         (let* ([x* (walk* x* s)] ...)
+           (g sk fk c))))]))

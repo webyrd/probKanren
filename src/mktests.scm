@@ -5,13 +5,23 @@
   (lambda (ls)
     (exact->inexact (/ (apply + ls) (length ls)))))
 
-
 (define one-or-two
   (lambda (x)
     (conde
       ((== 1 x))
       ((== 2 x)))))
 
+(define geom-bool
+  (lambda (n)
+    (fresh (x)
+      (flip 0.5 x)
+      (conde
+        ((== #t x) (== 0 n))
+        ((== #f x)
+         (fresh (xs)
+           (geom-bool xs)
+           (project (xs)
+             (== (add1 xs) n))))))))
 
 (define geom
   (lambda (x n)
@@ -448,9 +458,64 @@
   (fresh (r)
     (uniform 0.0 0.4 r)
     (uniform r 1.0 q)
-      (fresh (x)
-	(== x #t)
-	(flip q x))))
+    (fresh (x)
+      (== x #t)
+      (flip q x))))
+
+(run-mh 100 (q)
+  (uniform 0.0 1.0 q))
+
+(mean
+  (run-mh 1000 (q)
+    (uniform 0.0 1.0 q)
+    (flip q #t)))
+;; should produce a value near 2/3
+
+(mean
+  (run-mh 1000 (q)
+    (uniform 0.0 1.0 q)
+    (flip q #f)))
+;; should produce a value near 1/3
+
+(mean
+  (run-mh 1000 (q)
+    (uniform 0.0 1.0 q)
+    (fresh (x)
+      (== x #t)
+      (flip q x))))
+;; should produce a value near 2/3
+
+(mean
+  (run-mh 1000 (q)
+    (uniform 0.0 1.0 q)
+    (fresh (x)
+      (flip q x)
+      (== x #t))))
+;; should produce a value near 2/3
+
+(mean (run-mh 10000 (q) (one-or-two q)))
+;; should return an answer near 1.5
+
+(mean (run-mh 10000 (q) (geom q 0)))
+;; should return an answer near 1.0
+
+(mean (run-mh 10000 (q) (geom-bool q)))
+;; should return an answer near 1.0
+
+
+(define drop-n
+  (lambda (n ls)
+    (cond
+      [(null? ls) '()]
+      [(zero? n) ls]
+      [else (drop-n (sub1 n) (cdr ls))])))
+
+(define thin
+  (lambda (ls)
+    (cond
+      [(null? ls) '()]
+      [(null? (cdr ls)) (car ls)]
+      [else (cons (car ls) (thin (cddr ls)))])))
 
 
 ;; interesting test--what does this mean?
