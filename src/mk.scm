@@ -212,7 +212,9 @@
 
 (define uniform-log-density
   (lambda (x lo hi)
-    (log (/ (- hi lo)))))
+    (if (and (<= hi x) (>= x lo))
+	(log (/ (- hi lo)))
+	(log 0.0))))
 
 (define uniform
   (lambda (lo hi x)
