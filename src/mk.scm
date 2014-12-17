@@ -321,12 +321,12 @@
                           (let ((R (apply +
                                           (map (lambda (n) (log (/ n)))
                                                (get-conde-size-ls c)))))
-                            R) ;; R = reverse
+                            0) ;; R = reverse
                           ;; prob of transitioning from c^ to c
                           (let ((F (apply +
                                           (map (lambda (n) (log (/ n)))
                                                (get-conde-size-ls c^)))))
-                            F) ;; F = forward
+                            0) ;; F = forward
                           ;; prob of transitioning from c to c^
                           ))))))))))
 
