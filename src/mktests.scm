@@ -92,16 +92,15 @@
       ((== x #t))
       ((== x #f)))))
     
-(run-mh 100 (q)
-  (fresh (x)
-    (flip q x)
+(run-mh 100 (x)
+    (flip 0.5 x)
     (fresh (r)
       (== r -1.0)
       (conde
         ((== x #f)
          (normal 0.0 1.0 r))
         ((== x #t)
-         (uniform 0.0 1.0 r))))))
+         (uniform 0.0 1.0 r)))))
 
 #!eof
 
