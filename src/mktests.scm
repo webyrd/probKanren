@@ -43,7 +43,6 @@
       ((geom2/3b x (add1 n)))
       ((geom2/3b x (add1 n))))))
 
-
 (run-mh 100 (q)
   (conde
     ((uniform 0.0 2.0 q))
@@ -84,6 +83,25 @@
     ((== q 1))
     ((== q 2))))
 
+
+(run-mh 100 (q)
+  (uniform 0.0 1.0 q)
+  (fresh (x)
+    (flip q x)
+    (conde
+      ((== x #t))
+      ((== x #f)))))
+    
+(run-mh 100 (q)
+  (fresh (x)
+    (flip q x)
+    (fresh (r)
+      (== r -1.0)
+      (conde
+        ((== x #f)
+         (normal 0.0 1.0 r))
+        ((== x #t)
+         (uniform 0.0 1.0 r))))))
 
 #!eof
 

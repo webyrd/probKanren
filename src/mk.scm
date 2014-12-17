@@ -236,6 +236,37 @@
       (let ((rp (make-rp flip-sample flip-log-density x p)))
         (sk fk (ext-rp-ls rp c))))))
 
+(define marsaglia
+  (lambda ()
+    (let ((x (uniform-sample -1.0 1.0))
+	  (y (uniform-sample -1.0 1.0)))
+      (let ((s (+ (* x x) (* y y))))
+	(let ((q (sqrt (* -2.0 (log s) (/ s)))))
+	  (cond
+	   [(and (>= 1 s) (> s 0))
+	    (cons (* x q) (* y q))]
+	   [else (marsaglia)]))))))
+
+(define normal-sample
+  (lambda (mu sd)
+    (cond
+     [(< sd 0) (error "normal given invalid parameters")]
+     [else (+ mu (* sd (car (marsaglia))))])))
+
+(define normal-log-density
+  (lambda (x mu sd)
+    (let ((sq (lambda (x) (* x x))))
+      (let ((tau (/ (sq sd)))
+	    (pi 3.141592653589793))
+	(/ (+ (* (- tau) (sq (- x mu)))
+	      (log (/ tau pi 2))) 2)))))
+
+(define normal
+  (lambda (mu sd x)
+    (lambda (sk fk c)
+      (let ((rp (make-rp normal-sample normal-log-density x mu sd)))
+	(sk fk (ext-rp-ls rp c))))))
+
 (define solve-rp-constraints
   ;; fake goal that runs last in run-mh  
   (lambda (sk fk c)
