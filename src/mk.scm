@@ -252,7 +252,7 @@
 (define normal-sample
   (lambda (mu sd)
     (cond
-     [(< sd 0) (error "normal given invalid parameters")]
+     [(< sd 0) (error 'normal-sample "given invalid parameters")]
      [else (+ mu (* sd (car (marsaglia))))])))
 
 (define normal-log-density
@@ -348,8 +348,8 @@
                       (c/rp-ls^ (cadr ans)))
                   (let ((c^ (car c/rp-ls^))
                         (rp-ls^ (cadr c/rp-ls^)))
-                    (printf "(get-conde-size-ls c^): ~s\n" (get-conde-size-ls c^))
-                    (printf "(get-conde-size-ls c): ~s\n" (get-conde-size-ls c))
+                    ;(printf "(get-conde-size-ls c^): ~s\n" (get-conde-size-ls c^))
+                    ;(printf "(get-conde-size-ls c): ~s\n" (get-conde-size-ls c))
                     (list c^
                           (let ((R (apply +
                                           (map (lambda (n) (log (/ n)))
@@ -456,10 +456,10 @@
                                (F (caddr c^/R/F)))
                            (if (reject-sample? c^ c R F)
                                (begin
-                                 (printf "reject-sample => #t\n")
+                                 ;(printf "reject-sample => #t\n")
                                  (list fk c/rp-ls)) ;; do we really need this fk?
                                (begin
-                                 (printf "reject-sample => #f\n")
+                                 ;(printf "reject-sample => #f\n")
                                  (list fk (list c^ rp-ls))) ;; do we really need this fk?
                                ))))
                    (cons (reify x (get-s c)) ls)))))))))]))
@@ -486,24 +486,24 @@
             (rp-len^ (log (+ rp-len^ conde-size-ls-len^)))
             (ll-stale (+ ll-rp-stale ll-conde-stale))
             (ll-fresh (+ ll-rp-fresh ll-conde-fresh)))
-        (printf "ll^: ~s\n" ll^)
-        (printf "ll: ~s\n" ll)
-        (printf "R: ~s\n" R)
-        (printf "F: ~s\n" F)
-        (printf "rp-len^: ~s\n" rp-len^)
-        (printf "rp-len: ~s\n" rp-len)
-        (printf "rp-len^-exp: ~s\n" (exp rp-len^))
-        (printf "rp-len-exp: ~s\n" (exp rp-len))
+        ;(printf "ll^: ~s\n" ll^)
+        ;(printf "ll: ~s\n" ll)
+        ;(printf "R: ~s\n" R)
+        ;(printf "F: ~s\n" F)
+        ;(printf "rp-len^: ~s\n" rp-len^)
+        ;(printf "rp-len: ~s\n" rp-len)
         (let ((u (random 1.0)))
-          (printf "ll-stale: ~s\nll-fresh: ~s\n" ll-stale ll-fresh)
+          ;(printf "ll-stale: ~s\nll-fresh: ~s\n" ll-stale ll-fresh)
           (let ((log-u (log u))
                 (sum (+ (- ll^ ll)
                         (- R F)
                         (- rp-len rp-len^)
-                        (- ll-stale ll-fresh)
+                        (if (== ll-stale ll-fresh)
+			    0
+			    (- ll-stale ll-fresh))
                         )))
-            (printf "log-u: ~s\n" log-u)
-            (printf "sum: ~s\n" sum)
+            ;(printf "log-u: ~s\n" log-u)
+            ;(printf "sum: ~s\n" sum)
             (or (nan? sum)
 		(> log-u sum))))))))
 
@@ -624,7 +624,7 @@
   (lambda (v s)
     (let ((v (walk* v s)))
       (let ((v (walk* v (reify-s v empty-s))))
-        (printf "v: ~s\n\n" v)
+        ;(printf "v: ~s\n\n" v)
         v))))
 
 (define succeed
