@@ -282,6 +282,43 @@
       (let ((rp (make-rp flip-sample flip-log-density x p)))
         (sk fk (ext-rp-ls rp c))))))
 
+(define sum-list
+  (lambda (ls acc)
+    (cond
+     [(null? ls) '()]
+     [else
+      (cons
+       (cons (caar ls) (+ acc (cdar ls)))
+       (sum-list (cdr ls) (+ acc (cdar ls))))])))
+
+(define drop-while
+  (lambda (pred ls)
+    (cond
+     [(null? ls) '()]
+     [(pred (car ls)) (drop-while pred (cdr ls))]
+     [else (cons (car ls) (drop-while pred (cdr ls)))])))
+
+(define categorical-sample
+  (lambda (ls)
+    (let ((total (apply + (map cdr ls)))
+	  (sum-ls (sum-list ls 0)))
+      (let ((u (uniform-sample 0.0 total)))
+	(caar (drop-while (lambda (x) (> u (cdr x))) sum-ls))))))
+
+(define categorical-log-density
+  (lambda (ls x)
+    (let ((total (apply + (map cdr ls)))
+	  (p (assoc x ls)))
+      (cond
+       [p (log (/ (cdr p) total))]
+       [else (log 0.0)]))))
+
+(define categorical
+  (lambda (ls x)
+    (lambda (sk fk c)
+      (let ((rp (make-rp categorical-sample categorical-log-density x ls)))
+	(sk fk (ext-rp-ls rp c))))))
+
 (define marsaglia
   (lambda ()
     (let ((x (uniform-sample -1.0 1.0))
