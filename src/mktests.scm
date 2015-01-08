@@ -5,6 +5,12 @@
   (lambda (ls)
     (exact->inexact (/ (apply + ls) (length ls)))))
 
+(define variance
+  (lambda (ls)
+    (let ((ls-mean (mean ls))
+          (sq      (lambda (x) (* x x))))
+      (mean (map (lambda (x) (sq (- x ls-mean))) ls)))))
+
 (define one-or-two
   (lambda (x)
     (conde
@@ -101,6 +107,78 @@
          (normal 0.0 1.0 r))
         ((== x #t)
          (uniform 0.0 1.0 r)))))
+
+(define tug-of-war
+  (run-mh 10 (q)
+     (fresh (bob sue bob-lazy?1 sue-lazy?1 bob-lazy?2 sue-lazy?2 bob-lazy?3 sue-lazy?3)
+       (normal 0 1 bob)
+       (normal 0 1 sue)
+
+       (flip 0.25 bob-lazy?1)
+       (flip 0.25 sue-lazy?1)
+       (flip 0.25 bob-lazy?2)
+       (flip 0.25 bob-lazy?2)
+       (flip 0.25 sue-lazy?3)
+       (flip 0.25 sue-lazy?3)
+
+       (fresh (bob-pulls1 sue-pulls1 bob-pulls2 sue-pulls2 bob-pulls3 sue-pulls3)
+         
+       (conde
+         [(== bob-lazy?1 #t)
+          (project (bob)
+            (== bob-pulls1 (/ bob 2)))]
+         [(== bob-lazy?1 #f)
+          (== bob-pulls1 bob)])
+
+       (conde
+         [(== bob-lazy?2 #t)
+          (project (bob)
+            (== bob-pulls2 (/ bob 2)))]
+         [(== bob-lazy?2 #f)
+          (== bob-pulls2 bob)])
+
+       (conde
+         [(== bob-lazy?3 #t)
+          (project (bob)
+            (== bob-pulls3 (/ bob 2)))]
+         [(== bob-lazy?3 #f)
+          (== bob-pulls3 bob)])
+
+       (conde
+         [(== sue-lazy?1 #t)
+          (project (sue)
+            (== sue-pulls1 (/ sue 2)))]
+         [(== sue-lazy?1 #f)
+          (== sue-pulls1 sue)])
+
+       (conde
+         [(== sue-lazy?2 #t)
+          (project (sue)
+            (== sue-pulls2 (/ sue 2)))]
+         [(== sue-lazy?2 #f)
+          (== sue-pulls2 sue)])
+
+       (conde
+         [(== sue-lazy?3 #t)
+          (project (sue)
+            (== sue-pulls3 (/ sue 2)))]
+         [(== sue-lazy?3 #f)
+          (== sue-pulls3 sue)])
+      
+      (fresh (sue-wins1 sue-wins2 sue-wins3) 
+       (project (sue-pulls1 bob-pulls1)
+         (== sue-wins1 (> sue-pulls1 bob-pulls1)))
+       (== sue-wins1 #t)
+
+       (project (sue-pulls2 bob-pulls2)
+         (== sue-wins2 (> sue-pulls2 bob-pulls2)))
+       (== sue-wins2 #t)
+
+       (project (sue-pulls3 bob-pulls3)
+         (== sue-wins3 (> sue-pulls3 bob-pulls3)))
+       (== sue-wins3 #t)))
+
+       (== q (list bob sue)))))
 
 #!eof
 
