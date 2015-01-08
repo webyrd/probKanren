@@ -108,77 +108,62 @@
         ((== x #t)
          (uniform 0.0 1.0 r)))))
 
+#!eof
+
+(define /o
+  (lambda (x y z)
+    (delayed-goal `(,x ,y)
+      (project (x y z)
+        (== (/ x y) z)))))
+
+(define >o
+  (lambda (x y z)
+    (delayed-goal `(,x ,y)
+      (project (x y z)
+        (== (> x y) z)))))
+
+(define pullingo
+  (lambda (lazy? strength pulls)
+    (conde
+      [(== lazy? #t)
+       (/o strength 2 pulls)]
+      [(== lazy? #f)
+       (== strength pulls)])))
+
 (define tug-of-war
   (run-mh 10 (q)
-     (fresh (bob sue bob-lazy?1 sue-lazy?1 bob-lazy?2 sue-lazy?2 bob-lazy?3 sue-lazy?3)
-       (normal 0 1 bob)
-       (normal 0 1 sue)
+    (fresh (bob sue bob-lazy?1 sue-lazy?1 bob-lazy?2 sue-lazy?2 bob-lazy?3 sue-lazy?3)
+      (normal 0 1 bob)
+      (normal 0 1 sue)
 
-       (flip 0.25 bob-lazy?1)
-       (flip 0.25 sue-lazy?1)
-       (flip 0.25 bob-lazy?2)
-       (flip 0.25 bob-lazy?2)
-       (flip 0.25 sue-lazy?3)
-       (flip 0.25 sue-lazy?3)
+      (flip 0.25 bob-lazy?1)
+      (flip 0.25 sue-lazy?1)
+      (flip 0.25 bob-lazy?2)
+      (flip 0.25 bob-lazy?2)
+      (flip 0.25 sue-lazy?3)
+      (flip 0.25 sue-lazy?3)
 
-       (fresh (bob-pulls1 sue-pulls1 bob-pulls2 sue-pulls2 bob-pulls3 sue-pulls3)
-         
-       (conde
-         [(== bob-lazy?1 #t)
-          (project (bob)
-            (== bob-pulls1 (/ bob 2)))]
-         [(== bob-lazy?1 #f)
-          (== bob-pulls1 bob)])
+      (fresh (bob-pulls1 sue-pulls1 bob-pulls2 sue-pulls2 bob-pulls3 sue-pulls3)
 
-       (conde
-         [(== bob-lazy?2 #t)
-          (project (bob)
-            (== bob-pulls2 (/ bob 2)))]
-         [(== bob-lazy?2 #f)
-          (== bob-pulls2 bob)])
+        (pullingo bob-lazy?1 bob bob-pulls1)
+        (pullingo bob-lazy?2 bob bob-pulls2)
+        (pullingo bob-lazy?3 bob bob-pulls3)
 
-       (conde
-         [(== bob-lazy?3 #t)
-          (project (bob)
-            (== bob-pulls3 (/ bob 2)))]
-         [(== bob-lazy?3 #f)
-          (== bob-pulls3 bob)])
-
-       (conde
-         [(== sue-lazy?1 #t)
-          (project (sue)
-            (== sue-pulls1 (/ sue 2)))]
-         [(== sue-lazy?1 #f)
-          (== sue-pulls1 sue)])
-
-       (conde
-         [(== sue-lazy?2 #t)
-          (project (sue)
-            (== sue-pulls2 (/ sue 2)))]
-         [(== sue-lazy?2 #f)
-          (== sue-pulls2 sue)])
-
-       (conde
-         [(== sue-lazy?3 #t)
-          (project (sue)
-            (== sue-pulls3 (/ sue 2)))]
-         [(== sue-lazy?3 #f)
-          (== sue-pulls3 sue)])
+        (pullingo sue-lazy?1 sue sue-pulls1)
+        (pullingo sue-lazy?2 sue sue-pulls2)
+        (pullingo sue-lazy?3 sue sue-pulls3)
       
-      (fresh (sue-wins1 sue-wins2 sue-wins3) 
-       (project (sue-pulls1 bob-pulls1)
-         (== sue-wins1 (> sue-pulls1 bob-pulls1)))
-       (== sue-wins1 #t)
+        (fresh (sue-wins1 sue-wins2 sue-wins3)
+          (>o sue-pulls1 bob-pulls1 sue-wins1)
+          (== sue-wins1 #t)
 
-       (project (sue-pulls2 bob-pulls2)
-         (== sue-wins2 (> sue-pulls2 bob-pulls2)))
-       (== sue-wins2 #t)
+          (>o sue-pulls2 bob-pulls2 sue-wins2)
+          (== sue-wins2 #t)
 
-       (project (sue-pulls3 bob-pulls3)
-         (== sue-wins3 (> sue-pulls3 bob-pulls3)))
-       (== sue-wins3 #t)))
+          (>o sue-pulls3 bob-pulls3 sue-wins3)
+          (== sue-wins3 #t)))
 
-       (== q (list bob sue)))))
+      (== q (list bob sue)))))
 
 #!eof
 

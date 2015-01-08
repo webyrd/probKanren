@@ -1,5 +1,33 @@
 ;; Vicare doesn't seem to support random of a fixnum--need to use Chez for now.
 
+
+;; The delayed-goal form (delayed-goal t g) creates a goal equivalent
+;; to goal 'g', but whose execution is delayed until term 't' is fully
+;; ground.  See example usage in mktests.scm.
+
+;; (only partially implemented, but doesn't break anything)
+;;
+;; TODO
+;;
+;; * whenever the substitution is extended, including within
+;; solve-rp-constraints, iterate through the delayed goals, and run
+;; any goals that are now runnable
+;;
+;; * if we finish solve-rp constraints, and the list of delayed goals
+;; is non-empty, signal an error!  There is no way to calculate the
+;; answer.
+(define-syntax delayed-goal
+  (syntax-rules ()
+    ((_ t g)
+     (let ((t t)
+           (g g))
+       (lambda (sk fk c)
+         (let ((t (walk* t (get-s c))))
+           (if (ground? t)
+               (g sk fk c)
+               (sk fk (ext-delayed-ls (cons t g) c)))))))))
+
+
 (define-syntax rhs
   (syntax-rules ()
     ((_ x) (cdr x))))
@@ -24,7 +52,8 @@
 (define empty-s '())
 (define empty-sk/c/conde-size-ls '())
 (define empty-rp-ls '())
-(define empty-c `(,empty-s ,empty-sk/c/conde-size-ls  ,empty-rp-ls))
+(define empty-delayed-ls '())
+(define empty-c `(,empty-s ,empty-sk/c/conde-size-ls ,empty-rp-ls ,empty-delayed-ls))
 
 (define make-rp list)
 
@@ -63,6 +92,10 @@
   (lambda (c)
     (caddr c)))
 
+(define get-delayed-ls
+  (lambda (c)
+    (cadddr c)))
+
 ;; save the sk/c/conde-size for each conde encountered
 ;;
 ;; 'conde-size' is the number of conde clauses, which we use to
@@ -71,21 +104,32 @@
   (lambda (sk c conde-size)
     (let ((s (get-s c))
           (sk/c/conde-size-ls (get-sk/c/conde-size-ls c))
-          (rp-ls (get-rp-ls c)))
-      `(,s ((,sk ,c ,conde-size) . ,sk/c/conde-size-ls) ,rp-ls))))
+          (rp-ls (get-rp-ls c))
+          (delayed-ls (get-delayed-ls c)))
+      `(,s ((,sk ,c ,conde-size) . ,sk/c/conde-size-ls) ,rp-ls ,delayed-ls))))
 
 (define ext-rp-ls
   (lambda (rp c)
     (let ((s (get-s c))
           (sk/c/conde-size-ls (get-sk/c/conde-size-ls c))
-	  (rp-ls (get-rp-ls c)))
-      `(,s ,sk/c/conde-size-ls ,(cons rp rp-ls)))))
+	  (rp-ls (get-rp-ls c))
+          (delayed-ls (get-delayed-ls c)))
+      `(,s ,sk/c/conde-size-ls ,(cons rp rp-ls) ,delayed-ls))))
+
+(define ext-delayed-ls
+  (lambda (delayed-goal c)
+    (let ((s (get-s c))
+          (sk/c/conde-size-ls (get-sk/c/conde-size-ls c))
+	  (rp-ls (get-rp-ls c))
+          (delayed-ls (get-delayed-ls c)))
+      `(,s ,sk/c/conde-size-ls ,rp-ls ,(cons delayed-goal delayed-ls)))))
 
 (define update-s
   (lambda (s c)
     (let ((sk/c/conde-size-ls (get-sk/c/conde-size-ls c))
-	  (rp-ls (get-rp-ls c)))
-      `(,s ,sk/c/conde-size-ls ,rp-ls))))
+	  (rp-ls (get-rp-ls c))
+          (delayed-ls (get-delayed-ls c)))
+      `(,s ,sk/c/conde-size-ls ,rp-ls ,delayed-ls))))
 
 
 (define ext-s
