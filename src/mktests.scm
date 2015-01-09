@@ -592,6 +592,18 @@
 		     (5 . 1)
 		     (6 . 1)] q))))
 
+(define biased-conde
+  (lambda (samples)
+    (run-mh samples (q)
+      (fresh (r)
+        (categorical '[(a . 5)
+    		       (b . 1)
+		       (c . 3)] r)
+        (conde
+          [(== r 'a) (== q 2)]
+	  [(== r 'b) (== q 5)]
+	  [(== r 'c) (== q 7)])))))
+
 (define drop-n
   (lambda (n ls)
     (cond
