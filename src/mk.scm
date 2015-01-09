@@ -306,7 +306,7 @@
 	(caar (drop-while (lambda (x) (> u (cdr x))) sum-ls))))))
 
 (define categorical-log-density
-  (lambda (ls x)
+  (lambda (x ls)
     (let ((total (apply + (map cdr ls)))
 	  (p (assoc x ls)))
       (cond
@@ -314,7 +314,7 @@
        [else (log 0.0)]))))
 
 (define categorical
-  (lambda (ls x)
+  (lambda (x ls)
     (lambda (sk fk c)
       (let ((rp (make-rp categorical-sample categorical-log-density x ls)))
 	(sk fk (ext-rp-ls rp c))))))

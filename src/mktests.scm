@@ -582,6 +582,15 @@
 (mean (run-mh 10000 (q) (geom-bool q)))
 ;; should return an answer near 1.0
 
+(define dice
+  (lambda (samples)
+    (run-mh samples (q)
+      (categorical '[(1 . 1)
+		     (2 . 1)
+		     (3 . 1)
+		     (4 . 1)
+		     (5 . 1)
+		     (6 . 1)] q))))
 
 (define drop-n
   (lambda (n ls)
