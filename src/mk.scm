@@ -314,7 +314,7 @@
        [else (log 0.0)]))))
 
 (define categorical
-  (lambda (x ls)
+  (lambda (ls x)
     (lambda (sk fk c)
       (let ((rp (make-rp categorical-sample categorical-log-density x ls)))
 	(sk fk (ext-rp-ls rp c))))))
