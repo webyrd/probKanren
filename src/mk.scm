@@ -351,7 +351,7 @@
 	(sk fk (ext-rp-ls rp c))))))
 
 (define solve-rp-constraints
-  ;; fake goal that runs last in run-mh  
+  ;; fake goal that runs last in run-mh
   (lambda (sk fk c)
     (let loop ((rp-ls (get-rp-ls c))
                (s (get-s c)))
@@ -467,7 +467,7 @@
               (let ((R (apply density-proc (walk* x/args s))))
                 (let ((s-x (remove-from-s x s)))
                   (let ((val (apply resample-proc (walk* args s-x))))
-                    (let ((s (cons (cons x val) s-x)))
+                    (let ((s (ext-s x val s-x)))
                       (let ((F (apply density-proc (walk* x/args s))))
                         (list (update-s s c)
                               R
