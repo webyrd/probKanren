@@ -97,16 +97,17 @@
     (conde
       ((== x #t))
       ((== x #f)))))
-    
+
+;; Uniform-Mixture test
 (run-mh 100 (x)
-    (flip 0.5 x)
-    (fresh (r)
-      (== r -1.0)
-      (conde
-        ((== x #f)
-         (normal 0.0 1.0 r))
-        ((== x #t)
-         (uniform 0.0 1.0 r)))))
+  (flip 0.5 x)
+  (fresh (r)
+    (== r -1.0)
+    (conde
+      ((== x #f)
+       (normal 0.0 1.0 r))
+      ((== x #t)
+       (uniform 0.0 1.0 r)))))
 
 #!eof
 

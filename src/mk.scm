@@ -11,7 +11,10 @@
 ;;
 ;; * whenever the substitution is extended, including within
 ;; solve-rp-constraints, iterate through the delayed goals, and run
-;; any goals that are now runnable
+;; any goals that are now runnable:
+;; ** after a successful == call
+;; ** 
+;;
 ;;
 ;; * if we finish solve-rp constraints, and the list of delayed goals
 ;; is non-empty, signal an error!  There is no way to calculate the
@@ -196,6 +199,10 @@
       (let ((s (get-s c)))
         (let ((s (unify u v s)))
           (if s
+;; TODO              
+;;              (let ((c (update-s s c)))
+;;                (wake-up-delayed-goals  c))
+              
               (sk fk (update-s s c))
               (retry fk c)))))))
 
@@ -256,16 +263,15 @@
 
 (define uniform-log-density
   (lambda (x lo hi)
-    (if (and (<= hi x) (>= x lo))
-	(log (/ (- hi lo)))
-	(log 0.0))))
+    (if (and (>= x lo) (<= x hi))
+        (log (/ (- hi lo)))
+        (log 0.0))))
 
 (define uniform
   (lambda (lo hi x)
     (lambda (sk fk c)
       (let ((rp (make-rp uniform-sample uniform-log-density x lo hi)))
         (sk fk (ext-rp-ls rp c))))))
-
 
 (define flip-sample
   (lambda (p)
@@ -356,8 +362,9 @@
     (let loop ((rp-ls (get-rp-ls c))
                (s (get-s c)))
       (cond
-        [(null? rp-ls) (sk fk (list (update-s s c)
-                                    (get-samplable-rp-ls s c)))]
+        [(null? rp-ls)
+         (sk fk (list (update-s s c)
+                      (get-samplable-rp-ls s c)))]
         [else
          (let ((rp (car rp-ls)))
            (let ((x (get-x rp))
@@ -370,7 +377,8 @@
                       (loop (cdr rp-ls) s)
                       (let ((sample (get-sample rp)))
                         (let ((samp (apply sample rest-args)))
-                          (loop (cdr rp-ls) (ext-s x samp s)))))]
+                          (let ((s (ext-s x samp s)))
+                            (loop (cdr rp-ls) s)))))]
                  [(can-any-rp-can-be-processed? (cdr rp-ls) s)
                   (loop (append (cdr rp-ls) (list rp)) s)]
                  [else (error 'solve-rp-constraints "can't make progress with rps")]))))]))))
@@ -579,9 +587,19 @@
                 (sum (+ (- ll^ ll)
                         (- R F)
                         (- rp-len rp-len^)
-                        (if (== ll-stale ll-fresh)
+
+                        ;; We arguably should include this term as
+                        ;; well, but this causes problems with the
+                        ;; Uniform-Mixture test in mktests.scm
+                        ;; (instead of transitioning almost
+                        ;; immediately from #t to #f, the test can
+                        ;; produce 10000 #t's).  This may be due to
+                        ;; ll-stale or ll-fresh being negative or
+                        ;; positive infinity.
+                        #;(if (= ll-stale ll-fresh)
 			    0
 			    (- ll-stale ll-fresh))
+
                         )))
             ;(printf "log-u: ~s\n" log-u)
             ;(printf "sum: ~s\n" sum)
