@@ -1,6 +1,10 @@
 (load "mk.scm")
 (load "test-check.scm")
 
+;; TODO  update tests to use 'test-random' macro
+
+;; TODO move some of the tests below the end-of-file marker up, and wrap them in 'test-random'
+
 (define mean
   (lambda (ls)
     (exact->inexact (/ (apply + ls) (length ls)))))
@@ -84,10 +88,12 @@
 (run-mh 100 (q) (fresh (r) (uniform 0.0 0.4 r) (uniform r 1.0 q) (fresh (x) (== x #t) (flip q x))))
 
 
-(run-mh 100 (q)
-  (conde
-    ((== q 1))
-    ((== q 2))))
+(test-random "conde-2"
+  (run-mh 100 (q)
+    (conde
+      ((== q 1))
+      ((== q 2))))
+  '(2 2 1 2 2 1 1 1 2 2 1 2 1 2 2 2 1 2 2 2 1 2 1 2 1 2 1 1 2 1 2 1 2 1 2 1 2 2 2 1 1 1 1 1 1 1 2 2 2 2 1 2 1 2 2 2 1 1 2 2 1 1 2 1 2 2 1 2 1 2 2 2 2 1 2 1 1 2 2 1 1 1 1 2 2 2 2 2 1 2 2 2 1 2 1 2 2 2 2 1))
 
 
 (run-mh 100 (q)
