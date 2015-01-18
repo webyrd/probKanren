@@ -1,5 +1,9 @@
 ;; Vicare doesn't seem to support random of a fixnum--need to use Chez for now.
 
+;; TODO Reconsider the (if (= ll-stale ll-fresh) ...) logic in
+;; 'reject-sample?'.  Is this necessary?  If so, how to make it work,
+;; without breaking the Uniform-Mixture test in mktests.scm
+
 
 ;; The delayed-goal form (delayed-goal t g) creates a goal equivalent
 ;; to goal 'g', but whose execution is delayed until term 't' is fully
