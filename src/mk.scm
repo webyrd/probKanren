@@ -131,6 +131,13 @@
           (delayed-ls (get-delayed-ls c)))
       `(,s ,sk/c/conde-size-ls ,rp-ls ,(cons delayed-goal delayed-ls)))))
 
+(define replace-delayed-ls
+  (lambda (delayed-ls c)
+    (let ((s (get-s c))
+          (sk/c/conde-size-ls (get-sk/c/conde-size-ls c))
+	  (rp-ls (get-rp-ls c)))
+      `(,s ,sk/c/conde-size-ls ,rp-ls ,delayed-ls))))
+
 (define update-s
   (lambda (s c)
     (let ((sk/c/conde-size-ls (get-sk/c/conde-size-ls c))
@@ -179,6 +186,31 @@
            (walk* (cdr v) s)))
         (else v)))))
 
+(define solve-delayed-goals
+  (lambda (sk fk c)
+    (let ((delayed-ls (get-delayed-ls c)))
+      (let loop ((delayed-ls-unseen delayed-ls)
+                 (delayed-ls-seen '()))
+        (cond
+          ((null? delayed-ls-unseen)
+           (let ((c (replace-delayed-ls delayed-ls-seen c)))
+             (sk fk c)))
+          (else
+           (let ((delayed-t/g (car delayed-ls-unseen)))
+             (let ((t (car delayed-t/g))
+                   (g (cdr delayed-t/g)))
+               (let ((t (walk* t (get-s c))))
+                 (if (ground? t)
+                     (let ((c^ (replace-delayed-ls
+                                 (append
+                                   delayed-ls-seen
+                                   (cdr delayed-ls-unseen))
+                                 c))
+                           (sk^ (lambda (fk^ c^)
+                                  (solve-delayed-goals sk fk^ c^))))
+                       (g sk^ fk c^))
+                     (loop (cdr delayed-ls-unseen)
+                           (cons delayed-t/g delayed-ls-seen))))))))))))
 
 (define unify
   (lambda (u v s)
@@ -196,19 +228,25 @@
         ((equal? u v) s)
         (else #f)))))
 
-
 (define ==
   (lambda (u v)
     (lambda (sk fk c)
       (let ((s (get-s c)))
         (let ((s (unify u v s)))
           (if s
-;; TODO              
-;;              (let ((c (update-s s c)))
-;;                (wake-up-delayed-goals  c))
-              
-              (sk fk (update-s s c))
-              (retry fk c)))))))
+              (let ((c (update-s s c)))
+                (sk fk c))              
+              (fk)))))))
+
+#;(define ==
+  (lambda (u v)
+    (lambda (sk fk c)
+      (let ((s (get-s c)))
+        (let ((s (unify u v s)))
+          (if s
+              (let ((c (update-s s c)))
+                (solve-delayed-goals sk fk c))              
+              (fk)))))))
 
 (define conj
   (lambda (g1 g2)
@@ -469,21 +507,50 @@
 
 (define resample-rp
   (lambda (rp-ls fk c)
-    (let ((rp (list-ref rp-ls (random (length rp-ls)))))
-      (let ((resample-proc (car rp))
-            (args (cdddr rp)))
-        (let ((density-proc (cadr rp))
-              (x/args (cddr rp)))
-          (let ((x (car x/args)))
-            (let ((s (get-s c)))
-              (let ((R (apply density-proc (walk* x/args s))))
-                (let ((s-x (remove-from-s x s)))
-                  (let ((val (apply resample-proc (walk* args s-x))))
-                    (let ((s (ext-s x val s-x)))
-                      (let ((F (apply density-proc (walk* x/args s))))
-                        (list (update-s s c)
-                              R
-                              F)))))))))))))
+    (let ((orig-c c))
+      (let ((rp (list-ref rp-ls (random (length rp-ls)))))
+        (let ((resample-proc (car rp))
+              (args (cdddr rp)))
+          (let ((density-proc (cadr rp))
+                (x/args (cddr rp)))
+            (let ((x (car x/args)))
+              (let ((s (get-s c)))
+                (let ((R (apply density-proc (walk* x/args s))))
+                  (let ((s-x (remove-from-s x s)))                    
+                    (let ((val (apply resample-proc (walk* args s-x))))
+                      (let ((s (ext-s x val s-x)))
+                        (let ((c (update-s s c)))
+
+                          ;; DELAYED GOALS STUFF
+                  
+                          ;; Once we remove x from s, any delayed goals that
+                          ;; were dependent upon x (really, the rp being
+                          ;; resampled) need to be re-run.  This means we have
+                          ;; to keep the delayed goals around, even after they
+                          ;; are run---just like we need to keep rp's around,
+                          ;; even after the rp's have been run.
+
+                          ;; We can tell which delayed goals need to be
+                          ;; re-run, since their 't's will no longer be ground
+                          ;; in s-x.  Observation: assuming delayed goals are
+                          ;; deterministic (a reasonable assumption!), delayed
+                          ;; goals are idempotent.  Re-running a previously
+                          ;; run delayed goal is essentially an expensive
+                          ;; no-op, since the resulting
+                          ;; unifications/substitution extension will be the
+                          ;; same.
+
+;                          (let ((c (solve-delayed-goals c)))
+;                            )
+                          
+                          (if c
+                              (let ((F (apply density-proc (walk* x/args s))))
+                                (list c
+                                      R
+                                      F))
+                              ;; if a delayed goal failed, resample
+                              (resample-rp rp-ls fk orig-c))
+                          )))))))))))))
 
 (define remove-from-s
   (lambda (x s)

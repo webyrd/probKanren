@@ -1,6 +1,5 @@
 (load "mk.scm")
 (load "test-check.scm")
-
 ;; TODO  update tests to use 'test-random' macro
 
 ;; TODO move some of the tests below the end-of-file marker up, and wrap them in 'test-random'
