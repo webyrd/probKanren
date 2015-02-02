@@ -151,6 +151,13 @@
           (samplable-rp-ls (get-samplable-rp-ls c)))
       `(,s ,sk/c/conde-size-ls ,rp-ls ,(cons delayed-goal delayed-ls) ,dependent-delayed-ls ,samplable-rp-ls))))
 
+(define ext-delayed-ls*
+  (lambda (delayed-goal* c)
+    (cond
+      ((null? delayed-goal*) c)
+      (else (let ((c (ext-delayed-ls (car delayed-goal*) c)))
+              (ext-delayed-ls* (cdr delayed-goal*) c))))))
+
 (define ext-dependent-delayed-ls
   (lambda (rp vars delayed-goal c)
     (let ((s (get-s c))
@@ -609,20 +616,25 @@
                           ;; are run---just like we need to keep rp's around,
                           ;; even after the rp's have been run.
 
-;                          (let ((c (solve-delayed-goals c)))
-;                            )
-
-                          (let ((F (apply density-proc (walk* x/args s))))
-                            (list c
-                                  R
-                                  F))
-                          
-;                          (if c
-                              
-                              ;; if a delayed goal failed, resample
-;                              (resample-rp rp-ls fk orig-c))
-                          
-                          )))))))))))))
+                          (let ((dependent-delayed-ls (get-dependent-delayed-ls c)))
+                            (cond
+                              ((assq rp dependent-delayed-ls) =>
+                               (lambda (pr)
+                                 (let ((info-ls (cdr pr)))
+                                   (let ((vars* (map car info-ls))
+                                         (delayed-goal* (map cadr info-ls)))
+                                     (let ((vars-for-removal (apply append vars*)))
+                                       (let ((s (get-s c)))
+                                         (let ((s (remove-from-s* vars-for-removal s)))
+                                           (let ((c (update-s s c)))
+                                             (let ((c (ext-delayed-ls* delayed-goal* c))
+                                                   (sk^ (lambda (fk^ c^)
+                                                          (let ((F (apply density-proc (walk* x/args s))))
+                                                            (list c^
+                                                                  R
+                                                                  F)))))
+                                               (solve-delayed-goals sk^ fk c))))))))))
+                              (else (error 'resample-rp "rp not in dependent-delayed-ls")))))))))))))))))
 
 (define remove-from-s
   (lambda (x s)
@@ -630,6 +642,12 @@
       (if pr
           (remq pr s)
           s))))
+
+(define remove-from-s*
+  (lambda (ls s)
+    (cond
+      ((null? ls) s)
+      (else (remove-from-s* (cdr ls) (remove-from-s (car ls) s))))))
 
 (define get-subst-prefix
   (lambda (s-old s-new)
