@@ -228,7 +228,7 @@
         ((equal? u v) s)
         (else #f)))))
 
-(define ==
+#;(define ==
   (lambda (u v)
     (lambda (sk fk c)
       (let ((s (get-s c)))
@@ -238,7 +238,7 @@
                 (sk fk c))              
               (fk)))))))
 
-#;(define ==
+(define ==
   (lambda (u v)
     (lambda (sk fk c)
       (let ((s (get-s c)))
