@@ -629,12 +629,19 @@
                                            (let ((c (update-s s c)))
                                              (let ((c (ext-delayed-ls* delayed-goal* c))
                                                    (sk^ (lambda (fk^ c^)
+                                                          ;; FIXME consolidate duplicated code
                                                           (let ((F (apply density-proc (walk* x/args s))))
                                                             (list c^
                                                                   R
                                                                   F)))))
                                                (solve-delayed-goals sk^ fk c))))))))))
-                              (else (error 'resample-rp "rp not in dependent-delayed-ls")))))))))))))))))
+                              (else
+                               ;; FIXME consolidate duplicated code
+                               (let ((F (apply density-proc (walk* x/args s))))
+                                 (list c
+                                       R
+                                       F))))))))))))))))))
+
 
 (define remove-from-s
   (lambda (x s)
