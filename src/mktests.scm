@@ -224,6 +224,27 @@
       solve-delayed-goals))
   '((4 7 5 35) (4 7 5 35) (4 7 5 35) (4 7 5 35) (4 7 5 35))) 
 
+(test "delayed-*o-9"
+  (run-mh 5 (q)
+    (fresh (w x y z)
+      (+o 3 w x)
+      (== w 4)
+      (== `(,w ,x ,y ,z) q)
+      (*o x y z)
+      (== y 5)))
+  '((4 _.0 5 _.1) (4 _.0 5 _.1) (4 _.0 5 _.1) (4 _.0 5 _.1) (4 _.0 5 _.1))) 
+
+(test "delayed-*o-10"
+  (run-mh 5 (q)
+    (fresh (w x y z)
+      (+o 3 w x)
+      (== w 4)
+      (== `(,w ,x ,y ,z) q)
+      (*o x y z)
+      (== y 5)
+      solve-delayed-goals))
+  '((4 7 5 35) (4 7 5 35) (4 7 5 35) (4 7 5 35) (4 7 5 35))) 
+
 
 
 #!eof
