@@ -115,12 +115,30 @@
        (uniform 0.0 1.0 r)))))
 
 
+(define +o
+  (lambda (x y z)
+    (delayed-goal `(,x ,y)
+      (project (x y z)
+        (== (+ x y) z)))))
 
 (define *o
   (lambda (x y z)
     (delayed-goal `(,x ,y)
       (project (x y z)
         (== (* x y) z)))))
+
+(define /o
+  (lambda (x y z)
+    (delayed-goal `(,x ,y)
+      (project (x y z)
+        (== (/ x y) z)))))
+
+(define >o
+  (lambda (x y z)
+    (delayed-goal `(,x ,y)
+      (project (x y z)
+        (== (> x y) z)))))
+
 
 
 (test "delayed-*o-1"
@@ -174,21 +192,43 @@
       solve-delayed-goals))
   '((4 12) (4 12) (4 12) (4 12) (4 12) (4 12) (4 12) (4 12) (4 12) (4 12))) 
 
+(test "delayed-*o-7"
+  (run-mh 5 (q)
+    (fresh (w x y z)
+      solve-delayed-goals
+      (*o x y z)
+      solve-delayed-goals
+      (+o 3 w x)
+      solve-delayed-goals      
+      (== w 4)
+      solve-delayed-goals
+      (== `(,w ,x ,y ,z) q)
+      solve-delayed-goals
+      (== y 5)
+      solve-delayed-goals))
+  '((4 7 5 35) (4 7 5 35) (4 7 5 35) (4 7 5 35) (4 7 5 35))) 
+
+(test "delayed-*o-8"
+  (run-mh 5 (q)
+    (fresh (w x y z)
+      solve-delayed-goals
+      (+o 3 w x)
+      solve-delayed-goals      
+      (== w 4)
+      solve-delayed-goals
+      (== `(,w ,x ,y ,z) q)
+      solve-delayed-goals
+      (*o x y z)      
+      solve-delayed-goals
+      (== y 5)
+      solve-delayed-goals))
+  '((4 7 5 35) (4 7 5 35) (4 7 5 35) (4 7 5 35) (4 7 5 35))) 
+
 
 
 #!eof
 
-(define /o
-  (lambda (x y z)
-    (delayed-goal `(,x ,y)
-      (project (x y z)
-        (== (/ x y) z)))))
 
-(define >o
-  (lambda (x y z)
-    (delayed-goal `(,x ,y)
-      (project (x y z)
-        (== (> x y) z)))))
 
 (define pullingo
   (lambda (lazy? strength pulls)
