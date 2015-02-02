@@ -228,16 +228,6 @@
         ((equal? u v) s)
         (else #f)))))
 
-#;(define ==
-  (lambda (u v)
-    (lambda (sk fk c)
-      (let ((s (get-s c)))
-        (let ((s (unify u v s)))
-          (if s
-              (let ((c (update-s s c)))
-                (sk fk c))              
-              (fk)))))))
-
 (define ==
   (lambda (u v)
     (lambda (sk fk c)
