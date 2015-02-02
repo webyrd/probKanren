@@ -9,7 +9,6 @@
 ;; to goal 'g', but whose execution is delayed until term 't' is fully
 ;; ground.  See example usage in mktests.scm.
 
-;; (only partially implemented, but doesn't break anything)
 ;;
 ;; TODO
 ;;
@@ -60,7 +59,14 @@
 (define empty-sk/c/conde-size-ls '())
 (define empty-rp-ls '())
 (define empty-delayed-ls '())
-(define empty-c `(,empty-s ,empty-sk/c/conde-size-ls ,empty-rp-ls ,empty-delayed-ls))
+(define empty-dependent-delayed-ls '())
+(define empty-samplable-rp-ls '())
+(define empty-c `(,empty-s
+                  ,empty-sk/c/conde-size-ls
+                  ,empty-rp-ls
+                  ,empty-delayed-ls
+                  ,empty-dependent-delayed-ls
+                  ,empty-samplable-rp-ls))
 
 (define make-rp list)
 
@@ -103,6 +109,14 @@
   (lambda (c)
     (cadddr c)))
 
+(define get-dependent-delayed-ls
+  (lambda (c)
+    (list-ref c 4)))
+
+(define get-samplable-rp-ls
+  (lambda (c)
+    (list-ref c 5)))
+
 ;; save the sk/c/conde-size for each conde encountered
 ;;
 ;; 'conde-size' is the number of conde clauses, which we use to
@@ -112,38 +126,76 @@
     (let ((s (get-s c))
           (sk/c/conde-size-ls (get-sk/c/conde-size-ls c))
           (rp-ls (get-rp-ls c))
-          (delayed-ls (get-delayed-ls c)))
-      `(,s ((,sk ,c ,conde-size) . ,sk/c/conde-size-ls) ,rp-ls ,delayed-ls))))
+          (delayed-ls (get-delayed-ls c))
+          (dependent-delayed-ls (get-dependent-delayed-ls c))
+          (samplable-rp-ls (get-samplable-rp-ls c)))
+      `(,s ((,sk ,c ,conde-size) . ,sk/c/conde-size-ls) ,rp-ls ,delayed-ls ,dependent-delayed-ls ,samplable-rp-ls))))
 
 (define ext-rp-ls
   (lambda (rp c)
     (let ((s (get-s c))
           (sk/c/conde-size-ls (get-sk/c/conde-size-ls c))
 	  (rp-ls (get-rp-ls c))
-          (delayed-ls (get-delayed-ls c)))
-      `(,s ,sk/c/conde-size-ls ,(cons rp rp-ls) ,delayed-ls))))
+          (delayed-ls (get-delayed-ls c))
+          (dependent-delayed-ls (get-dependent-delayed-ls c))
+          (samplable-rp-ls (get-samplable-rp-ls c)))
+      `(,s ,sk/c/conde-size-ls ,(cons rp rp-ls) ,delayed-ls ,dependent-delayed-ls ,samplable-rp-ls))))
 
 (define ext-delayed-ls
   (lambda (delayed-goal c)
     (let ((s (get-s c))
           (sk/c/conde-size-ls (get-sk/c/conde-size-ls c))
 	  (rp-ls (get-rp-ls c))
-          (delayed-ls (get-delayed-ls c)))
-      `(,s ,sk/c/conde-size-ls ,rp-ls ,(cons delayed-goal delayed-ls)))))
+          (delayed-ls (get-delayed-ls c))
+          (dependent-delayed-ls (get-dependent-delayed-ls c))
+          (samplable-rp-ls (get-samplable-rp-ls c)))
+      `(,s ,sk/c/conde-size-ls ,rp-ls ,(cons delayed-goal delayed-ls) ,dependent-delayed-ls ,samplable-rp-ls))))
+
+(define ext-dependent-delayed-ls
+  (lambda (rp vars delayed-goal c)
+    (let ((s (get-s c))
+          (sk/c/conde-size-ls (get-sk/c/conde-size-ls c))
+	  (rp-ls (get-rp-ls c))
+          (delayed-ls (get-delayed-ls c))
+          (dependent-delayed-ls (get-dependent-delayed-ls c))
+          (samplable-rp-ls (get-samplable-rp-ls c)))
+      (let ((dependent-delayed-ls
+             (cond
+               ((assq rp dependent-delayed-ls) =>
+                (lambda (pr)
+                  (let ((info-ls (cdr pr)))
+                    (cons `(,rp . ((,vars ,delayed-goal) . ,info-ls)) dependent-delayed-ls))))
+               (else (cons `(,rp . ((,vars ,delayed-goal))) dependent-delayed-ls)))))
+        `(,s ,sk/c/conde-size-ls ,rp-ls ,delayed-ls ,dependent-delayed-ls ,samplable-rp-ls)))))
+
+(define ext-samplable-rp-ls
+  (lambda (rp c)
+    (let ((s (get-s c))
+          (sk/c/conde-size-ls (get-sk/c/conde-size-ls c))
+	  (rp-ls (get-rp-ls c))
+          (delayed-ls (get-delayed-ls c))
+          (dependent-delayed-ls (get-dependent-delayed-ls c))
+          (samplable-rp-ls (get-samplable-rp-ls c)))
+      (let ((samplable-rp-ls (cons rp samplable-rp-ls)))
+        `(,s ,sk/c/conde-size-ls ,rp-ls ,delayed-ls ,dependent-delayed-ls ,samplable-rp-ls)))))
 
 (define replace-delayed-ls
   (lambda (delayed-ls c)
     (let ((s (get-s c))
           (sk/c/conde-size-ls (get-sk/c/conde-size-ls c))
-	  (rp-ls (get-rp-ls c)))
-      `(,s ,sk/c/conde-size-ls ,rp-ls ,delayed-ls))))
+	  (rp-ls (get-rp-ls c))
+          (dependent-delayed-ls (get-dependent-delayed-ls c))
+          (samplable-rp-ls (get-samplable-rp-ls c)))
+      `(,s ,sk/c/conde-size-ls ,rp-ls ,delayed-ls ,dependent-delayed-ls ,samplable-rp-ls))))
 
 (define update-s
   (lambda (s c)
     (let ((sk/c/conde-size-ls (get-sk/c/conde-size-ls c))
 	  (rp-ls (get-rp-ls c))
-          (delayed-ls (get-delayed-ls c)))
-      `(,s ,sk/c/conde-size-ls ,rp-ls ,delayed-ls))))
+          (delayed-ls (get-delayed-ls c))
+          (dependent-delayed-ls (get-dependent-delayed-ls c))
+          (samplable-rp-ls (get-samplable-rp-ls c)))
+      `(,s ,sk/c/conde-size-ls ,rp-ls ,delayed-ls ,dependent-delayed-ls ,samplable-rp-ls))))
 
 
 (define ext-s
@@ -211,6 +263,41 @@
                        (g sk^ fk c^))
                      (loop (cdr delayed-ls-unseen)
                            (cons delayed-t/g delayed-ls-seen))))))))))))
+
+(define solve-dependent-delayed-goals
+  (lambda (sk fk c rp)
+    (let ((delayed-ls (get-delayed-ls c)))
+      (let loop ((delayed-ls-unseen delayed-ls)
+                 (delayed-ls-seen '()))
+        (cond
+          ((null? delayed-ls-unseen)
+           (let ((c (replace-delayed-ls delayed-ls-seen c)))
+             (sk fk c)))
+          (else
+           (let ((delayed-t/g (car delayed-ls-unseen)))
+             (let ((t (car delayed-t/g))
+                   (g (cdr delayed-t/g)))
+               (let ((t (walk* t (get-s c))))
+                 (if (ground? t)
+                     (let ((s (get-s c))
+                           (c^ (replace-delayed-ls
+                                 (append
+                                   delayed-ls-seen
+                                   (cdr delayed-ls-unseen))
+                                 c)))
+                       (let ((sk^ (lambda (fk^ c^)
+                                    (let ((s^ (get-s c^)))
+                                      (let ((vars (map car (get-subst-prefix s s^))))
+                                        (let ((c^ (ext-dependent-delayed-ls
+                                                   rp
+                                                   vars
+                                                   delayed-t/g
+                                                   c^)))
+                                          (solve-dependent-delayed-goals sk fk^ c^ rp)))))))
+                         (g sk^ fk c^)))
+                     (begin
+                       (loop (cdr delayed-ls-unseen)
+                             (cons delayed-t/g delayed-ls-seen)))))))))))))
 
 (define unify
   (lambda (u v s)
@@ -303,7 +390,8 @@
   (lambda (lo hi x)
     (lambda (sk fk c)
       (let ((rp (make-rp uniform-sample uniform-log-density x lo hi)))
-        (sk fk (ext-rp-ls rp c))))))
+        (let ((c (ext-rp-ls rp c)))
+          (sk fk c))))))
 
 (define flip-sample
   (lambda (p)
@@ -395,8 +483,9 @@
                (s (get-s c)))
       (cond
         [(null? rp-ls)
-         (sk fk (list (update-s s c)
-                      (get-samplable-rp-ls s c)))]
+         (if (null? (get-delayed-ls c))
+             (sk fk (update-s s c))
+             (error 'solve-rp-constraints "can't make progress with delayed goals"))]
         [else
          (let ((rp (car rp-ls)))
            (let ((x (get-x rp))
@@ -410,7 +499,11 @@
                       (let ((sample (get-sample rp)))
                         (let ((samp (apply sample rest-args)))
                           (let ((s (ext-s x samp s)))
-                            (loop (cdr rp-ls) s)))))]
+                            (let ((c (ext-samplable-rp-ls rp c)))
+                              (let ((c^ (update-s s c))
+                                    (sk^ (lambda (fk^ c^)
+                                           (solve-rp-constraints sk fk^ c^))))
+                                (solve-dependent-delayed-goals sk^ fk c^ rp)))))))]
                  [(can-any-rp-can-be-processed? (cdr rp-ls) s)
                   (loop (append (cdr rp-ls) (list rp)) s)]
                  [else (error 'solve-rp-constraints "can't make progress with rps")]))))]))))
@@ -466,23 +559,19 @@
                 ;; TODO -- what to do for the null? case?
                 (error 'resample-conde "what to do here?")
                 (let ((fk (car ans))
-                      (c/rp-ls^ (cadr ans)))
-                  (let ((c^ (car c/rp-ls^))
-                        (rp-ls^ (cadr c/rp-ls^)))
-                    ;(printf "(get-conde-size-ls c^): ~s\n" (get-conde-size-ls c^))
-                    ;(printf "(get-conde-size-ls c): ~s\n" (get-conde-size-ls c))
-                    (list c^
-                          (let ((R (apply +
-                                          (map (lambda (n) (log (/ n)))
-                                               (get-conde-size-ls c)))))
-                            0) ;; R = reverse
-                          ;; prob of transitioning from c^ to c
-                          (let ((F (apply +
-                                          (map (lambda (n) (log (/ n)))
-                                               (get-conde-size-ls c^)))))
-                            0) ;; F = forward
-                          ;; prob of transitioning from c to c^
-                          ))))))))))
+                      (c^ (cadr ans)))
+                  (list c^
+                        (let ((R (apply +
+                                        (map (lambda (n) (log (/ n)))
+                                             (get-conde-size-ls c)))))
+                          0) ;; R = reverse
+                        ;; prob of transitioning from c^ to c
+                        (let ((F (apply +
+                                        (map (lambda (n) (log (/ n)))
+                                             (get-conde-size-ls c^)))))
+                          0) ;; F = forward
+                        ;; prob of transitioning from c to c^
+                        )))))))))
 
 
 #|
@@ -506,7 +595,7 @@
             (let ((x (car x/args)))
               (let ((s (get-s c)))
                 (let ((R (apply density-proc (walk* x/args s))))
-                  (let ((s-x (remove-from-s x s)))                    
+                  (let ((s-x (remove-from-s x s)))
                     (let ((val (apply resample-proc (walk* args s-x))))
                       (let ((s (ext-s x val s-x)))
                         (let ((c (update-s s c)))
@@ -520,26 +609,19 @@
                           ;; are run---just like we need to keep rp's around,
                           ;; even after the rp's have been run.
 
-                          ;; We can tell which delayed goals need to be
-                          ;; re-run, since their 't's will no longer be ground
-                          ;; in s-x.  Observation: assuming delayed goals are
-                          ;; deterministic (a reasonable assumption!), delayed
-                          ;; goals are idempotent.  Re-running a previously
-                          ;; run delayed goal is essentially an expensive
-                          ;; no-op, since the resulting
-                          ;; unifications/substitution extension will be the
-                          ;; same.
-
 ;                          (let ((c (solve-delayed-goals c)))
 ;                            )
+
+                          (let ((F (apply density-proc (walk* x/args s))))
+                            (list c
+                                  R
+                                  F))
                           
-                          (if c
-                              (let ((F (apply density-proc (walk* x/args s))))
-                                (list c
-                                      R
-                                      F))
+;                          (if c
+                              
                               ;; if a delayed goal failed, resample
-                              (resample-rp rp-ls fk orig-c))
+;                              (resample-rp rp-ls fk orig-c))
+                          
                           )))))))))))))
 
 (define remove-from-s
@@ -548,24 +630,6 @@
       (if pr
           (remq pr s)
           s))))
-
-(define get-samplable-rp-ls
-  (lambda (s c)
-    (let ((s-old (get-s c))
-          (rp-ls (get-rp-ls c)))
-      (let ((s-prefix (get-subst-prefix s-old s)))
-        (let loop ((rp-ls rp-ls)
-                   (acc '()))
-          (cond
-            ((null? rp-ls) acc)
-            (else (let ((rp (car rp-ls)))
-                    (let ((x (caddr rp)))
-                      (cond
-                        ((eq? 'x-ignore-from-conde x)
-                         (loop (cdr rp-ls) (cons rp acc)))
-                        ((assq x s-prefix)
-                         (loop (cdr rp-ls) (cons rp acc)))
-                        (else (loop (cdr rp-ls) acc))))))))))))
 
 (define get-subst-prefix
   (lambda (s-old s-new)
@@ -593,9 +657,8 @@
              ((null? ans) (reverse ls))
              (else
               (let ((fk (car ans))
-                    (c/rp-ls (cadr ans)))
-                (let ((c (car c/rp-ls))
-                      (rp-ls (cadr c/rp-ls)))
+                    (c (cadr ans)))
+                (let ((rp-ls (get-samplable-rp-ls c)))
                   (loop
                    (sub1 n)
                    (if (and (null? rp-ls) (null? (get-sk/c/conde-size-ls c)))
@@ -606,11 +669,11 @@
                                (F (caddr c^/R/F)))
                            (if (reject-sample? c^ c R F)
                                (begin
-                                 ;(printf "reject-sample => #t\n")
-                                 (list fk c/rp-ls)) ;; do we really need this fk?
+                                        ;(printf "reject-sample => #t\n")
+                                 (list fk c)) ;; do we really need this fk?
                                (begin
-                                 ;(printf "reject-sample => #f\n")
-                                 (list fk (list c^ rp-ls))) ;; do we really need this fk?
+                                        ;(printf "reject-sample => #f\n")
+                                 (list fk c^)) ;; do we really need this fk?
                                ))))
                    (cons (reify x (get-s c)) ls)))))))))]))
 

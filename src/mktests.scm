@@ -4,6 +4,40 @@
 
 ;; TODO move some of the tests below the end-of-file marker up, and wrap them in 'test-random'
 
+(define +o
+  (lambda (x y z)
+    (delayed-goal `(,x ,y)
+      (project (x y z)
+        (== (+ x y) z)))))
+
+(define *o
+  (lambda (x y z)
+    (delayed-goal `(,x ,y)
+      (project (x y z)
+        (== (* x y) z)))))
+
+(define /o
+  (lambda (x y z)
+    (delayed-goal `(,x ,y)
+      (project (x y z)
+        (== (/ x y) z)))))
+
+(define >o
+  (lambda (x y z)
+    (delayed-goal `(,x ,y)
+      (project (x y z)
+        (== (> x y) z)))))
+
+(test "delayed-*o-11"
+  (run-mh 5 (q)
+    (fresh (x y)
+      (== `(,x ,y) q)
+      (+o 3 x y)
+      (uniform 0.0 1.0 x)))
+  '????)
+
+#!eof
+
 (define mean
   (lambda (ls)
     (exact->inexact (/ (apply + ls) (length ls)))))
@@ -115,29 +149,6 @@
        (uniform 0.0 1.0 r)))))
 
 
-(define +o
-  (lambda (x y z)
-    (delayed-goal `(,x ,y)
-      (project (x y z)
-        (== (+ x y) z)))))
-
-(define *o
-  (lambda (x y z)
-    (delayed-goal `(,x ,y)
-      (project (x y z)
-        (== (* x y) z)))))
-
-(define /o
-  (lambda (x y z)
-    (delayed-goal `(,x ,y)
-      (project (x y z)
-        (== (/ x y) z)))))
-
-(define >o
-  (lambda (x y z)
-    (delayed-goal `(,x ,y)
-      (project (x y z)
-        (== (> x y) z)))))
 
 
 
@@ -247,9 +258,7 @@
 
 
 
-
 #!eof
-
 
 
 (define pullingo
