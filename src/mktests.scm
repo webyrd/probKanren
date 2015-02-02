@@ -114,6 +114,68 @@
       ((== x #t)
        (uniform 0.0 1.0 r)))))
 
+
+
+(define *o
+  (lambda (x y z)
+    (delayed-goal `(,x ,y)
+      (project (x y z)
+        (== (* x y) z)))))
+
+
+(test "delayed-*o-1"
+  (run-mh 10 (x)
+    (*o 3 4 x))
+  '(12 12 12 12 12 12 12 12 12 12))
+
+(test "delayed-*o-2"
+  (run-mh 10 (q)
+    (fresh (x y)
+      (== x 4)
+      (*o 3 x y)
+      (== `(,x ,y) q)))
+  '((4 12) (4 12) (4 12) (4 12) (4 12) (4 12) (4 12) (4 12) (4 12) (4 12)))
+
+(test "delayed-*o-3"
+  (run-mh 10 (q)
+    (fresh (x y)
+      (*o 3 x y)
+      (== x 4)
+      (== `(,x ,y) q)))
+  '((4 _.0) (4 _.0) (4 _.0) (4 _.0) (4 _.0) (4 _.0) (4 _.0) (4 _.0) (4 _.0) (4 _.0)))
+
+(test "delayed-*o-4"
+  (run-mh 10 (q)
+    (fresh (x y)
+      (*o 3 x y)
+      (== x 4)
+      solve-delayed-goals
+      (== `(,x ,y) q)))
+  '((4 12) (4 12) (4 12) (4 12) (4 12) (4 12) (4 12) (4 12) (4 12) (4 12)))
+
+(test "delayed-*o-5"
+  (run-mh 10 (q)
+    (fresh (x y)
+      (*o 3 x y)
+      solve-delayed-goals
+      (== x 4)
+      (== `(,x ,y) q)))
+  '((4 _.0) (4 _.0) (4 _.0) (4 _.0) (4 _.0) (4 _.0) (4 _.0) (4 _.0) (4 _.0) (4 _.0)))
+
+(test "delayed-*o-6"
+  (run-mh 10 (q)
+    (fresh (x y)
+      solve-delayed-goals
+      (*o 3 x y)
+      solve-delayed-goals
+      (== x 4)
+      solve-delayed-goals
+      (== `(,x ,y) q)
+      solve-delayed-goals))
+  '((4 12) (4 12) (4 12) (4 12) (4 12) (4 12) (4 12) (4 12) (4 12) (4 12))) 
+
+
+
 #!eof
 
 (define /o

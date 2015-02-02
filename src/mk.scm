@@ -25,9 +25,9 @@
 ;; answer.
 (define-syntax delayed-goal
   (syntax-rules ()
-    ((_ t g)
-     (let ((t t)
-           (g g))
+    ((_ te ge)
+     (let ((t te)
+           (g ge))
        (lambda (sk fk c)
          (let ((t (walk* t (get-s c))))
            (if (ground? t)
