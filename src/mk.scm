@@ -1,3 +1,13 @@
+;; TODO 
+
+;; finish rewriting resample and the two related resample helpers,
+;; ensuring they make proper use of continuations.
+;;
+;; may want to store the 'old c' in the current c, to allow
+;; calculation of R and F
+
+
+
 ;; Vicare doesn't seem to support random of a fixnum--need to use Chez for now.
 
 ;; TODO Reconsider the (if (= ll-stale ll-fresh) ...) logic in
@@ -544,41 +554,36 @@
       [else (find-rp-info x (cdr rp-ls))])))
 
 (define resample
-  (lambda (rp-ls fk c)
+  (lambda (rp-ls sk fk c)
     (let ((sk/c/conde-size-ls (get-sk/c/conde-size-ls c)))
       (let ((total-len (+ (length rp-ls) (length sk/c/conde-size-ls))))
         (let ((ran (random total-len)))
           (if (>= ran (length rp-ls))
-              (resample-conde fk c sk/c/conde-size-ls)
-              (resample-rp rp-ls fk c)))))))
+              (resample-conde sk fk sk/c/conde-size-ls)
+              (resample-rp rp-ls sk fk c)))))))
 
 
 ;; TODO figure out if these are the correct values of R and F
 (define resample-conde
-  (lambda (fk c sk/c/conde-size-ls)
+  (lambda (sk fk c sk/c/conde-size-ls)
     (let ((ran (random (length sk/c/conde-size-ls))))
       (let ((sk/c/conde-size (list-ref sk/c/conde-size-ls ran)))
         (let ((sk-ran (car sk/c/conde-size))
               (c-ran (cadr sk/c/conde-size)))
-          ;; weird to return an 'ans' here!
-          (let ((ans (sk-ran fk c-ran)))
-            (if (null? ans)
-                ;; TODO -- what to do for the null? case?
-                (error 'resample-conde "what to do here?")
-                (let ((fk (car ans))
-                      (c^ (cadr ans)))
-                  (list c^
-                        (let ((R (apply +
-                                        (map (lambda (n) (log (/ n)))
-                                             (get-conde-size-ls c)))))
-                          0) ;; R = reverse
-                        ;; prob of transitioning from c^ to c
-                        (let ((F (apply +
-                                        (map (lambda (n) (log (/ n)))
-                                             (get-conde-size-ls c^)))))
-                          0) ;; F = forward
-                        ;; prob of transitioning from c to c^
-                        )))))))))
+          (sk-ran fk c-ran))))))
+
+;; (list c^
+;;       (let ((R (apply +
+;;                       (map (lambda (n) (log (/ n)))
+;;                            (get-conde-size-ls c)))))
+;;         0) ;; R = reverse
+;;       ;; prob of transitioning from c^ to c
+;;       (let ((F (apply +
+;;                       (map (lambda (n) (log (/ n)))
+;;                            (get-conde-size-ls c^)))))
+;;         0) ;; F = forward
+;;       ;; prob of transitioning from c to c^
+;;       )
 
 
 #|
@@ -592,7 +597,7 @@
 |#
 
 (define resample-rp
-  (lambda (rp-ls fk c)
+  (lambda (rp-ls sk fk c)
     (let ((orig-c c))
       (let ((rp (list-ref rp-ls (random (length rp-ls)))))
         (let ((resample-proc (car rp))
@@ -627,20 +632,13 @@
                                        (let ((s (get-s c)))
                                          (let ((s (remove-from-s* vars-for-removal s)))
                                            (let ((c (update-s s c)))
-                                             (let ((c (ext-delayed-ls* delayed-goal* c))
-                                                   (sk^ (lambda (fk^ c^)
-                                                          ;; FIXME consolidate duplicated code
-                                                          (let ((F (apply density-proc (walk* x/args s))))
-                                                            (list c^
-                                                                  R
-                                                                  F)))))
-                                               (solve-delayed-goals sk^ fk c))))))))))
-                              (else
-                               ;; FIXME consolidate duplicated code
-                               (let ((F (apply density-proc (walk* x/args s))))
-                                 (list c
-                                       R
-                                       F))))))))))))))))))
+                                             (let ((c (ext-delayed-ls* delayed-goal* c)))
+                                               (solve-delayed-goals sk fk c))))))))))
+                              (else (sk fk c)))))))))))))))))
+
+
+;                               (let ((F (apply density-proc (walk* x/args s))))
+)
 
 
 (define remove-from-s
@@ -688,18 +686,17 @@
                    (sub1 n)
                    (if (and (null? rp-ls) (null? (get-sk/c/conde-size-ls c)))
                        ans
-                       (let ((c^/R/F (resample rp-ls fk c)))
-                         (let ((c^ (car c^/R/F))
-                               (R (cadr c^/R/F))
-                               (F (caddr c^/R/F)))
-                           (if (reject-sample? c^ c R F)
-                               (begin
+                       (let ((sk
+                              (lambda (fk c^)
+                                (if (reject-sample? c^ c)
+                                    (begin
                                         ;(printf "reject-sample => #t\n")
-                                 (list fk c)) ;; do we really need this fk?
-                               (begin
+                                      (list fk c)) ;; do we really need this fk?
+                                    (begin
                                         ;(printf "reject-sample => #f\n")
-                                 (list fk c^)) ;; do we really need this fk?
-                               ))))
+                                      (list fk c^)) ;; do we really need this fk?
+                                    ))))
+                         (resample rp-ls sk fk c)))
                    (cons (reify x (get-s c)) ls)))))))))]))
 
 (define reject-sample?
