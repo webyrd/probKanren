@@ -667,14 +667,15 @@
      (let ((n ne)
            (x (var 'x)))
        (let ((ans ((fresh () g g* ... solve-rp-constraints)
-                   (lambda (fk c)  ;; initial sk
-                     (list fk c))
-                   (lambda (c) #f) ;; initial fk
+                   (lambda (fk c) ;; initial sk
+                     (list fk c)) ;; an answer
+                   (lambda (c) ;; initial fk
+                     #f) ;; representation of failure/no answer
                    empty-c)))
          (if (not ans)
              '()
              (let loop ((n n)
-                        (ans ans)
+                        (ans ans) ;; an answer is a list of an 'fk' and a 'c'
                         (ls '()))
                (cond
                  ((zero? n) (reverse ls))
