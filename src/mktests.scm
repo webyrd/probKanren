@@ -4,6 +4,7 @@
 
 ;; TODO move some of the tests below the end-of-file marker up, and wrap them in 'test-random'
 
+
 (define +o
   (lambda (x y z)
     (delayed-goal `(,x ,y)
@@ -35,6 +36,51 @@
       (+o 3 x y)
       (uniform 0.0 1.0 x)))
   '????)
+
+(run-mh 10 (q)
+  (conde
+    ((== q 5))
+    ((== q 6))))
+
+
+(run-mh 10 (q)
+  (conde
+    ((== q 5))
+    ((== q 6) (== q 7))))
+
+
+(run-mh 10 (q)
+  (uniform 0.0 1.0 q))
+
+(run-mh 10 (q)
+  (fresh (x r y)
+    (== (list x r y) q)
+    (uniform 0.0 1.0 r)
+    (conde
+      ((== x #t) (*o 2.0 r y))
+      ((== x #f) (*o 1.0 r y)))))
+
+(run-mh 10 (q)
+  (fresh (x r)
+    (uniform 0.0 1.0 r)
+    (conde
+      ((== x #t) (*o 2.0 r q))
+      ((== x #f) (*o 1.0 r q)))))
+
+
+(define pullingo
+ (lambda (lazy? strength pulls)
+   (conde
+     [(== lazy? #t)
+      (/o strength 2.0 pulls)]
+     [(== lazy? #f)
+      (== strength pulls)])))
+
+(define t1
+  (run-mh 10 (q)
+    (fresh (pulls)
+      (uniform 0.0 5.0 pulls)
+      (pullingo q pulls))))
 
 #!eof
 

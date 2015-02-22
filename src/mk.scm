@@ -560,11 +560,12 @@
       (let ((sk/c/conde-size (list-ref sk/c/conde-size-ls ran)))
         (let ((sk-ran (car sk/c/conde-size))
               (c-ran (cadr sk/c/conde-size)))
-          ;; weird to return an 'ans' here!
-          (let ((ans (sk-ran fk c-ran)))
+          (let loop ((ans (sk-ran fk c-ran)))
             (if (null? ans)
-                ;; TODO -- what to do for the null? case?
-                (error 'resample-conde "what to do here?")
+                ;; resampling resulted in == failing
+                (begin
+                  (printf "resample-conde failed--trying again!\n")
+                  (loop (sk-ran fk c-ran)))
                 (let ((fk (car ans))
                       (c^ (cadr ans)))
                   (list c^
