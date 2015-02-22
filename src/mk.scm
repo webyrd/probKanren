@@ -667,34 +667,35 @@
      (let ((n ne)
            (x (var 'x)))
        (let ((ans ((fresh () g g* ... solve-rp-constraints)
-                   (lambda (fk c)
+                   (lambda (fk c)  ;; initial sk
                      (list fk c))
-                   (lambda (c) #f) ; initial fk
+                   (lambda (c) #f) ;; initial fk
                    empty-c)))
-         (let loop ((n n)
-                    (ans ans)
-                    (ls '()))
-           (cond
-             ((zero? n) (reverse ls))
-             ((not? ans) (reverse ls))
-             (else
-              (let ((fk (car ans))
-                    (c (cadr ans)))
-                (let ((rp-ls (get-samplable-rp-ls c)))
-                  (loop
-                   (sub1 n)                                     
-                   (letrec ((fk (lambda (old-c)
-                                  (let ((sk (lambda (fk^ new-c)
-                                              (if (reject-sample? new-c old-c)
-                                                  (list fk^ old-c) ;; ans
-                                                  (list fk^ new-c) ;; ans
-                                                  ))))
-                                    (resample (get-samplable-rp-ls old-c) sk fk old-c)))))
-                     ;; replace the original fk, which can return a
-                     ;; non-answer representing failure, with an fk
-                     ;; that always resamples
-                     (fk c))
-                   (cons (reify x (get-s c)) ls)))))))))]))
+         (if (not ans)
+             '()
+             (let loop ((n n)
+                        (ans ans)
+                        (ls '()))
+               (cond
+                 ((zero? n) (reverse ls))
+                 (else
+                  (let ((fk (car ans))
+                        (c (cadr ans)))
+                    (let ((rp-ls (get-samplable-rp-ls c)))
+                      (loop
+                       (sub1 n)
+                       (letrec ((fk (lambda (old-c)
+                                      (let ((sk (lambda (fk^ new-c)
+                                                  (if (reject-sample? new-c old-c)
+                                                      (list fk^ old-c) ;; ans
+                                                      (list fk^ new-c) ;; ans
+                                                      ))))
+                                        (resample (get-samplable-rp-ls old-c) sk fk old-c)))))
+                         ;; replace the original fk, which can return a
+                         ;; non-answer representing failure, with an fk
+                         ;; that always resamples
+                         (fk c))
+                       (cons (reify x (get-s c)) ls))))))))))]))
 
 (define reject-sample?
   (lambda (c^ c)
