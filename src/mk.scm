@@ -263,7 +263,7 @@
         (cond
           ((null? delayed-ls-unseen)
            (let ((c (replace-delayed-ls delayed-ls-seen c)))
-             (sk fk c)))
+             (sk fk c R F)))
           (else
            (let ((delayed-t/g (car delayed-ls-unseen)))
              (let ((t (car delayed-t/g))
@@ -340,7 +340,7 @@
           (if s
               (let ((c (update-s s c)))
                 (solve-delayed-goals sk fk c))              
-              (fk)))))))
+              (fk c)))))))
 
 (define conj
   (lambda (g1 g2)
@@ -555,12 +555,13 @@
 
 (define resample
   (lambda (rp-ls sk fk c)
-    (let ((sk/c/conde-size-ls (get-sk/c/conde-size-ls c)))
-      (let ((total-len (+ (length rp-ls) (length sk/c/conde-size-ls))))
-        (let ((ran (random total-len)))
-          (if (>= ran (length rp-ls))
-              (resample-conde sk fk sk/c/conde-size-ls)
-              (resample-rp rp-ls sk fk c)))))))
+    (let ((rp-ls (get-samplable-rp-ls c)))
+      (let ((sk/c/conde-size-ls (get-sk/c/conde-size-ls c)))
+        (let ((total-len (+ (length rp-ls) (length sk/c/conde-size-ls))))
+          (let ((ran (random total-len)))
+            (if (>= ran (length rp-ls))
+                (resample-conde sk fk sk/c/conde-size-ls)
+                (resample-rp rp-ls sk fk c))))))))
 
 
 ;; TODO figure out if these are the correct values of R and F
@@ -606,7 +607,7 @@
                 (x/args (cddr rp)))
             (let ((x (car x/args)))
               (let ((s (get-s c)))
-                (let ((R (apply density-proc (walk* x/args s))))
+                (let ((R (apply density-proc (walk* x/args s))))                                  
                   (let ((s-x (remove-from-s x s)))
                     (let ((val (apply resample-proc (walk* args s-x))))
                       (let ((s (ext-s x val s-x)))
@@ -634,11 +635,9 @@
                                            (let ((c (update-s s c)))
                                              (let ((c (ext-delayed-ls* delayed-goal* c)))
                                                (solve-delayed-goals sk fk c))))))))))
-                              (else (sk fk c)))))))))))))))))
-
-
-;                               (let ((F (apply density-proc (walk* x/args s))))
-)
+                              (else
+                               (let ((F (apply density-proc (walk* x/args s))))
+                                 (sk fk c))))))))))))))))))
 
 
 (define remove-from-s
@@ -670,87 +669,88 @@
        (let ((ans ((fresh () g g* ... solve-rp-constraints)
                    (lambda (fk c)
                      (list fk c))
-                   (lambda () '())
+                   (lambda (c) #f) ; initial fk
                    empty-c)))
          (let loop ((n n)
                     (ans ans)
                     (ls '()))
            (cond
              ((zero? n) (reverse ls))
-             ((null? ans) (reverse ls))
+             ((not? ans) (reverse ls))
              (else
               (let ((fk (car ans))
                     (c (cadr ans)))
                 (let ((rp-ls (get-samplable-rp-ls c)))
                   (loop
-                   (sub1 n)
-                   (if (and (null? rp-ls) (null? (get-sk/c/conde-size-ls c)))
-                       ans
-                       (let ((sk
-                              (lambda (fk c^)
-                                (if (reject-sample? c^ c)
-                                    (begin
-                                        ;(printf "reject-sample => #t\n")
-                                      (list fk c)) ;; do we really need this fk?
-                                    (begin
-                                        ;(printf "reject-sample => #f\n")
-                                      (list fk c^)) ;; do we really need this fk?
-                                    ))))
-                         (resample rp-ls sk fk c)))
+                   (sub1 n)                                     
+                   (letrec ((fk (lambda (old-c)
+                                  (let ((sk (lambda (fk^ new-c)
+                                              (if (reject-sample? new-c old-c)
+                                                  (list fk^ old-c) ;; ans
+                                                  (list fk^ new-c) ;; ans
+                                                  ))))
+                                    (resample sk fk old-c)))))
+                     ;; replace the original fk, which can return a
+                     ;; non-answer representing failure, with an fk
+                     ;; that always resamples
+                     (fk c))
                    (cons (reify x (get-s c)) ls)))))))))]))
 
 (define reject-sample?
-  (lambda (c^ c R F)
-    (let-values ([(ll-rp
-                   ll-rp^
-                   rp-len
-                   rp-len^
-                   ll-rp-stale
-                   ll-rp-fresh)
-                  (calculate-rp-ls-likelihoods c c^)]
-                 [(log-conde-size-ls
-                   log-conde-size-ls^
-                   conde-size-ls-len
-                   conde-size-ls-len^
-                   ll-conde-stale
-                   ll-conde-fresh)
-                  (calculate-conde-size-ls-likelihoods c c^)])
-      (let ((ll (+ ll-rp log-conde-size-ls))
-            (ll^ (+ ll-rp^ log-conde-size-ls^))
-            (rp-len (log (+ rp-len conde-size-ls-len)))
-            (rp-len^ (log (+ rp-len^ conde-size-ls-len^)))
-            (ll-stale (+ ll-rp-stale ll-conde-stale))
-            (ll-fresh (+ ll-rp-fresh ll-conde-fresh)))
-        ;(printf "ll^: ~s\n" ll^)
-        ;(printf "ll: ~s\n" ll)
-        ;(printf "R: ~s\n" R)
-        ;(printf "F: ~s\n" F)
-        ;(printf "rp-len^: ~s\n" rp-len^)
-        ;(printf "rp-len: ~s\n" rp-len)
-        (let ((u (random 1.0)))
-          ;(printf "ll-stale: ~s\nll-fresh: ~s\n" ll-stale ll-fresh)
-          (let ((log-u (log u))
-                (sum (+ (- ll^ ll)
-                        (- R F)
-                        (- rp-len rp-len^)
+  (lambda (c^ c)
+    (let ((R 0.0)  ; TODO - fix this hack!
+          (F 0.0)) ; we need to either calculate R and F from c and c^, or
+                   ; somehow pass R and F from resample helpers to 'reject-sample?'
+      (let-values ([(ll-rp
+                     ll-rp^
+                     rp-len
+                     rp-len^
+                     ll-rp-stale
+                     ll-rp-fresh)
+                    (calculate-rp-ls-likelihoods c c^)]
+                   [(log-conde-size-ls
+                     log-conde-size-ls^
+                     conde-size-ls-len
+                     conde-size-ls-len^
+                     ll-conde-stale
+                     ll-conde-fresh)
+                    (calculate-conde-size-ls-likelihoods c c^)])
+        (let ((ll (+ ll-rp log-conde-size-ls))
+              (ll^ (+ ll-rp^ log-conde-size-ls^))
+              (rp-len (log (+ rp-len conde-size-ls-len)))
+              (rp-len^ (log (+ rp-len^ conde-size-ls-len^)))
+              (ll-stale (+ ll-rp-stale ll-conde-stale))
+              (ll-fresh (+ ll-rp-fresh ll-conde-fresh)))
+                                        ;(printf "ll^: ~s\n" ll^)
+                                        ;(printf "ll: ~s\n" ll)
+                                        ;(printf "R: ~s\n" R)
+                                        ;(printf "F: ~s\n" F)
+                                        ;(printf "rp-len^: ~s\n" rp-len^)
+                                        ;(printf "rp-len: ~s\n" rp-len)
+          (let ((u (random 1.0)))
+                                        ;(printf "ll-stale: ~s\nll-fresh: ~s\n" ll-stale ll-fresh)
+            (let ((log-u (log u))
+                  (sum (+ (- ll^ ll)
+                          (- R F)
+                          (- rp-len rp-len^)
 
-                        ;; We arguably should include this term as
-                        ;; well, but this causes problems with the
-                        ;; Uniform-Mixture test in mktests.scm
-                        ;; (instead of transitioning almost
-                        ;; immediately from #t to #f, the test can
-                        ;; produce 10000 #t's).  This may be due to
-                        ;; ll-stale or ll-fresh being negative or
-                        ;; positive infinity.
-                        #;(if (= ll-stale ll-fresh)
-			    0
-			    (- ll-stale ll-fresh))
+                          ;; We arguably should include this term as
+                          ;; well, but this causes problems with the
+                          ;; Uniform-Mixture test in mktests.scm
+                          ;; (instead of transitioning almost
+                          ;; immediately from #t to #f, the test can
+                          ;; produce 10000 #t's).  This may be due to
+                          ;; ll-stale or ll-fresh being negative or
+                          ;; positive infinity.
+                          #;(if (= ll-stale ll-fresh)
+                          0
+                          (- ll-stale ll-fresh))
 
-                        )))
-            ;(printf "log-u: ~s\n" log-u)
-            ;(printf "sum: ~s\n" sum)
-            (or (nan? sum)
-		(> log-u sum))))))))
+                          )))
+                                        ;(printf "log-u: ~s\n" log-u)
+                                        ;(printf "sum: ~s\n" sum)
+              (or (nan? sum)
+                  (> log-u sum)))))))))
 
 (define calculate-rp-ls-likelihoods
   (lambda (c c^)
@@ -875,10 +875,6 @@
 (define succeed
   (lambda (sk fk c)
     (sk fk c)))
-
-(define fail
-  (lambda (sk fk c)
-    (fk)))
 
 (define-syntax project
   (syntax-rules ()
