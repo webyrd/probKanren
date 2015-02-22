@@ -691,7 +691,7 @@
                                                       (list fk^ old-c) ;; ans
                                                       (list fk^ new-c) ;; ans
                                                       ))))
-                                        (resample (get-samplable-rp-ls old-c) sk fk old-c)))))
+                                        (resample sk fk old-c)))))
                          ;; replace the original fk, which can return a
                          ;; non-answer representing failure, with an fk
                          ;; that always resamples
