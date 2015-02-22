@@ -4,9 +4,6 @@
 
 ;; TODO move some of the tests below the end-of-file marker up, and wrap them in 'test-random'
 
-;; TODO did we break handling of conde?
-;; (given the error message from the tug of war example gives us an error) 
-
 (define +o
   (lambda (x y z)
     (delayed-goal `(,x ,y)
@@ -39,7 +36,7 @@
       (uniform 0.0 1.0 x)))
   '????)
 
-
+#!eof
 
 (define mean
   (lambda (ls)
@@ -259,21 +256,24 @@
       solve-delayed-goals))
   '((4 7 5 35) (4 7 5 35) (4 7 5 35) (4 7 5 35) (4 7 5 35))) 
 
+
+
 #!eof
+
 
 (define pullingo
   (lambda (lazy? strength pulls)
     (conde
       [(== lazy? #t)
-       (/o strength 2.0 pulls)]
+       (/o strength 2 pulls)]
       [(== lazy? #f)
        (== strength pulls)])))
 
 (define tug-of-war
   (run-mh 10 (q)
     (fresh (bob sue bob-lazy?1 sue-lazy?1 bob-lazy?2 sue-lazy?2 bob-lazy?3 sue-lazy?3)
-      (normal 0.0 1.0 bob)
-      (normal 0.0 1.0 sue)
+      (normal 0 1 bob)
+      (normal 0 1 sue)
 
       (flip 0.25 bob-lazy?1)
       (flip 0.25 sue-lazy?1)
