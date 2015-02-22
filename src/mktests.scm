@@ -48,6 +48,18 @@
     ((== q 5))
     ((== q 6) (== q 7))))
 
+(run-mh 10 (q)
+  (conde
+    ((== q 6) (== q 7))))
+
+(run-mh 10 (q)
+  (conde
+    ((== q 5))
+    ((== q 6)
+     (conde
+       ((== q 7))
+       ((== q 8))))))
+
 
 (run-mh 10 (q)
   (uniform 0.0 1.0 q))
@@ -80,7 +92,7 @@
   (run-mh 10 (q)
     (fresh (pulls)
       (uniform 0.0 5.0 pulls)
-      (pullingo q pulls))))
+      (pullingo #t q pulls))))
 
 #!eof
 

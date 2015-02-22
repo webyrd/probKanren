@@ -330,7 +330,7 @@
           (if s
               (let ((c (update-s s c)))
                 (solve-delayed-goals sk fk c))              
-              (fk)))))))
+              (fk c)))))))
 
 (define conj
   (lambda (g1 g2)
@@ -561,7 +561,8 @@
         (let ((sk-ran (car sk/c/conde-size))
               (c-ran (cadr sk/c/conde-size)))
           (let loop ((ans (sk-ran fk c-ran)))
-            (if (null? ans)
+            (printf "resample-conde (car ans): ~s\n" (car ans))
+            (if (eqv? (car ans) 'fail)
                 ;; resampling resulted in == failing
                 (begin
                   (printf "resample-conde failed--trying again!\n")
@@ -670,38 +671,64 @@
     [(_ ne (x) g g* ...)
      (let ((n ne)
            (x (var 'x)))
-       (let ((ans ((fresh () g g* ... solve-rp-constraints)
-                   (lambda (fk c)
-                     (list fk c))
-                   (lambda () '())
-                   empty-c)))
-         (let loop ((n n)
-                    (ans ans)
-                    (ls '()))
-           (cond
-             ((zero? n) (reverse ls))
-             ((null? ans) (reverse ls))
-             (else
-              (let ((fk (car ans))
-                    (c (cadr ans)))
-                (let ((rp-ls (get-samplable-rp-ls c)))
-                  (loop
-                   (sub1 n)
-                   (if (and (null? rp-ls) (null? (get-sk/c/conde-size-ls c)))
-                       ans
-                       (let ((c^/R/F (resample rp-ls fk c)))
-                         (let ((c^ (car c^/R/F))
-                               (R (cadr c^/R/F))
-                               (F (caddr c^/R/F)))
-                           (if (reject-sample? c^ c R F)
-                               (begin
+       (let main ((ans ((fresh () g g* ... solve-rp-constraints)
+                        (lambda (fk c)
+                          (list fk c))
+                        (lambda (c) `(fail ,c))
+                        empty-c)))
+         (cond
+           ((zero? n) '())
+           ((eqv? (car ans) 'fail)
+            ;; means we failed before producing the first answer, so we can't resample
+            (let ((c (cadr ans)))
+              (printf "fail trying to get the first answer!\n")
+              ;; Try backtracking, if there is a non-singleton conde to back into
+              (let loop ((sk/c/conde-size-ls (reverse (get-sk/c/conde-size-ls c)))) ; the list needs to be reversed, I think
+                (cond
+                  ((null? sk/c/conde-size-ls)
+                   ;; didn't find a non-singleton-clause conde to retry
+                   (printf "no non-singleton-clause conde to backtrack into; failing for real!\n")
+                   '())
+                  (else (let ((sk/c/conde-size (car sk/c/conde-size-ls)))
+                          (let ((sk (car sk/c/conde-size))
+                                (c (cadr sk/c/conde-size))
+                                (conde-size (caddr sk/c/conde-size)))
+                            (cond
+                              ((> conde-size 1) ; found a conde with another clause we can try
+                               (printf "backtracking into a non-singleton-clause conde!\n")
+                               (let ((fk (lambda (c) `(fail ,c))))
+                                 (main (sk fk c))))
+                              (else (loop (cdr sk/c/conde-size-ls)))))))))))
+           (else
+            (let loop ((n n)
+                       (ans ans)
+                       (ls '()))
+              (cond
+                ((zero? n) (reverse ls))
+                ((eqv? (car ans) 'fail)
+                 ;; once we start sampling, failure ans should be handled from within 'resample-conde'
+                 (error 'run-mh "ans is 'fail'"))
+                (else
+                 (let ((fk (car ans))
+                       (c (cadr ans)))
+                   (let ((rp-ls (get-samplable-rp-ls c)))
+                     (loop
+                      (sub1 n)
+                      (if (and (null? rp-ls) (null? (get-sk/c/conde-size-ls c)))
+                          ans
+                          (let ((c^/R/F (resample rp-ls fk c)))
+                            (let ((c^ (car c^/R/F))
+                                  (R (cadr c^/R/F))
+                                  (F (caddr c^/R/F)))
+                              (if (reject-sample? c^ c R F)
+                                  (begin
                                         ;(printf "reject-sample => #t\n")
-                                 (list fk c)) ;; do we really need this fk?
-                               (begin
+                                    (list fk c)) ;; do we really need this fk?
+                                  (begin
                                         ;(printf "reject-sample => #f\n")
-                                 (list fk c^)) ;; do we really need this fk?
-                               ))))
-                   (cons (reify x (get-s c)) ls)))))))))]))
+                                    (list fk c^)) ;; do we really need this fk?
+                                  ))))
+                      (cons (reify x (get-s c)) ls)))))))))))]))
 
 (define reject-sample?
   (lambda (c^ c R F)
@@ -882,7 +909,7 @@
 
 (define fail
   (lambda (sk fk c)
-    (fk)))
+    (fk c)))
 
 (define-syntax project
   (syntax-rules ()
