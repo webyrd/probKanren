@@ -321,39 +321,40 @@
        (== strength pulls)])))
 
 (define tug-of-war
-  (run-mh 10 (q)
-    (fresh (bob sue bob-lazy?1 sue-lazy?1 bob-lazy?2 sue-lazy?2 bob-lazy?3 sue-lazy?3)
-      (normal 0 1 bob)
-      (normal 0 1 sue)
+  (lambda (samples)
+    (run-mh samples (q)
+      (fresh (bob sue bob-lazy?1 sue-lazy?1 bob-lazy?2 sue-lazy?2 bob-lazy?3 sue-lazy?3)
+	(normal 0.0 1.0 bob)
+	(normal 0.0 1.0 sue)
 
-      (flip 0.25 bob-lazy?1)
-      (flip 0.25 sue-lazy?1)
-      (flip 0.25 bob-lazy?2)
-      (flip 0.25 bob-lazy?2)
-      (flip 0.25 sue-lazy?3)
-      (flip 0.25 sue-lazy?3)
+	(flip 0.25 bob-lazy?1)
+	(flip 0.25 sue-lazy?1)
+	(flip 0.25 bob-lazy?2)
+	(flip 0.25 bob-lazy?2)
+	(flip 0.25 sue-lazy?3)
+	(flip 0.25 sue-lazy?3)
 
-      (fresh (bob-pulls1 sue-pulls1 bob-pulls2 sue-pulls2 bob-pulls3 sue-pulls3)
+		   (fresh (bob-pulls1 sue-pulls1 bob-pulls2 sue-pulls2 bob-pulls3 sue-pulls3)
 
-        (pullingo bob-lazy?1 bob bob-pulls1)
-        (pullingo bob-lazy?2 bob bob-pulls2)
-        (pullingo bob-lazy?3 bob bob-pulls3)
+			  (pullingo bob-lazy?1 bob bob-pulls1)
+			  (pullingo bob-lazy?2 bob bob-pulls2)
+			  (pullingo bob-lazy?3 bob bob-pulls3)
 
-        (pullingo sue-lazy?1 sue sue-pulls1)
-        (pullingo sue-lazy?2 sue sue-pulls2)
-        (pullingo sue-lazy?3 sue sue-pulls3)
-      
-        (fresh (sue-wins1 sue-wins2 sue-wins3)
-          (>o sue-pulls1 bob-pulls1 sue-wins1)
-          (== sue-wins1 #t)
+			  (pullingo sue-lazy?1 sue sue-pulls1)
+			  (pullingo sue-lazy?2 sue sue-pulls2)
+			  (pullingo sue-lazy?3 sue sue-pulls3)
+			  
+			  (fresh (sue-wins1 sue-wins2 sue-wins3)
+				 (>o sue-pulls1 bob-pulls1 sue-wins1)
+				 (== sue-wins1 #t)
 
-          (>o sue-pulls2 bob-pulls2 sue-wins2)
-          (== sue-wins2 #t)
+				 (>o sue-pulls2 bob-pulls2 sue-wins2)
+				 (== sue-wins2 #t)
 
-          (>o sue-pulls3 bob-pulls3 sue-wins3)
-          (== sue-wins3 #t)))
+				 (>o sue-pulls3 bob-pulls3 sue-wins3)
+				 (== sue-wins3 #t)))
 
-      (== q (list bob sue)))))
+		   (== q (list bob sue))))))
 
 #!eof
 

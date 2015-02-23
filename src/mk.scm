@@ -332,6 +332,10 @@
                 (solve-delayed-goals sk fk c))              
               (fk c)))))))
 
+(define map-goalo
+  (lambda (f ls)
+    (conj*-aux (map f ls))))
+
 (define conj
   (lambda (g1 g2)
     (lambda (sk fk c)
