@@ -1,4 +1,5 @@
 (load "mk.scm")
+(load "helpers.scm")
 (load "test-check.scm")
 ;; TODO  update tests to use 'test-random' macro
 
