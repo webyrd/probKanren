@@ -696,7 +696,7 @@
                                 (conde-size (caddr sk/c/conde-size)))
                             (cond
                               ((> conde-size 1) ; found a conde with another clause we can try
-                               (printf "backtracking into a non-singleton-clause conde!\n")
+                               ;(printf "backtracking into a non-singleton-clause conde!\n")
                                (let ((fk (lambda (c) `(fail ,c))))
                                  (main (sk fk c))))
                               (else (loop (cdr sk/c/conde-size-ls)))))))))))
