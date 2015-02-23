@@ -92,8 +92,6 @@
      [(== lazy? #f)
       (== strength pulls)])))
 
-#!eof
-
 (define mean
   (lambda (ls)
     (exact->inexact (/ (apply + ls) (length ls)))))
@@ -312,9 +310,6 @@
       solve-delayed-goals))
   '((4 7 5 35) (4 7 5 35) (4 7 5 35) (4 7 5 35) (4 7 5 35))) 
 
-
-
-#!eof
 
 
 (define pullingo
