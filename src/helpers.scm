@@ -8,7 +8,7 @@
          (repeato (sub1 n) f res)
          (== (cons x res) q))])))
 
-(define map-goalo_
+(define seq-goalo
   (lambda (f ls)
     (conj*-aux (map f ls))))
 

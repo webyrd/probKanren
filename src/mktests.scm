@@ -376,7 +376,7 @@
 
 	    (fresh (sue-wins)
               (zipwitho >o sue-pulls bob-pulls sue-wins)
-	      (map-goalo_ (lambda (x) (== x #t)) sue-wins))))
+	      (seq-goalo (lambda (x) (== x #t)) sue-wins))))
 	(== q (list bob sue))))))
 
 ;; Example run-mh can be found in comments for the non-deterministic
