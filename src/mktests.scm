@@ -357,9 +357,29 @@
 
 		   (== q (list bob sue))))))
 
-;; run and run* are now deprecated
+(define tug-of-war2
+  (lambda (samples)
+    (run-mh samples (q)
+      (fresh (bob sue)
+	(normal 0.0 1.0 bob)
+	(normal 0.0 1.0 sue)
+	
+	(fresh (bob-lazy sue-lazy)
+	  (repeato 3 (lambda (x) (flip 0.25 x)) bob-lazy)
+	  (repeato 3 (lambda (x) (flip 0.25 x)) sue-lazy)
+           
+          (fresh (bob-pulls sue-pulls)
+            (map-goalo (lambda (x g)
+			 (pullingo x bob g)) bob-lazy bob-pulls)
+	    (map-goalo (lambda (x g)
+			 (pullingo x sue g)) sue-lazy sue-pulls)
 
-;; Example run can be found in comments for the non-deterministic
+	    (fresh (sue-wins)
+              (zipwitho >o sue-pulls bob-pulls sue-wins)
+	      (map-goalo_ (lambda (x) (== x #t)) sue-wins))))
+	(== q (list bob sue))))))
+
+;; Example run-mh can be found in comments for the non-deterministic
 ;; tests below
 
 (test "1a"
