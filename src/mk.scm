@@ -561,11 +561,11 @@
         (let ((sk-ran (car sk/c/conde-size))
               (c-ran (cadr sk/c/conde-size)))
           (let loop ((ans (sk-ran fk c-ran)))
-            (printf "resample-conde (car ans): ~s\n" (car ans))
+            ;(printf "resample-conde (car ans): ~s\n" (car ans))
             (if (eqv? (car ans) 'fail)
                 ;; resampling resulted in == failing
                 (begin
-                  (printf "resample-conde failed--trying again!\n")
+                  ;(printf "resample-conde failed--trying again!\n")
                   (loop (sk-ran fk c-ran)))
                 (let ((fk (car ans))
                       (c^ (cadr ans)))
@@ -681,13 +681,14 @@
            ((eqv? (car ans) 'fail)
             ;; means we failed before producing the first answer, so we can't resample
             (let ((c (cadr ans)))
-              (printf "fail trying to get the first answer!\n")
+              ;(printf "fail trying to get the first answer!\n")
               ;; Try backtracking, if there is a non-singleton conde to back into
-              (let loop ((sk/c/conde-size-ls (reverse (get-sk/c/conde-size-ls c)))) ; the list needs to be reversed, I think
+					; the list needs to be reversed, I think
+              (let loop ((sk/c/conde-size-ls (reverse (get-sk/c/conde-size-ls c))))
                 (cond
                   ((null? sk/c/conde-size-ls)
                    ;; didn't find a non-singleton-clause conde to retry
-                   (printf "no non-singleton-clause conde to backtrack into; failing for real!\n")
+                   ;(printf "no non-singleton-clause conde to backtrack into; failing for real!\n")
                    '())
                   (else (let ((sk/c/conde-size (car sk/c/conde-size-ls)))
                           (let ((sk (car sk/c/conde-size))
