@@ -335,27 +335,27 @@
 	(flip 0.25 sue-lazy?3)
 	(flip 0.25 sue-lazy?3)
 
-		   (fresh (bob-pulls1 sue-pulls1 bob-pulls2 sue-pulls2 bob-pulls3 sue-pulls3)
+        (fresh (bob-pulls1 sue-pulls1 bob-pulls2 sue-pulls2 bob-pulls3 sue-pulls3)
 
-			  (pullingo bob-lazy?1 bob bob-pulls1)
-			  (pullingo bob-lazy?2 bob bob-pulls2)
-			  (pullingo bob-lazy?3 bob bob-pulls3)
+          (pullingo bob-lazy?1 bob bob-pulls1)
+          (pullingo bob-lazy?2 bob bob-pulls2)
+          (pullingo bob-lazy?3 bob bob-pulls3)
 
-			  (pullingo sue-lazy?1 sue sue-pulls1)
-			  (pullingo sue-lazy?2 sue sue-pulls2)
-			  (pullingo sue-lazy?3 sue sue-pulls3)
+          (pullingo sue-lazy?1 sue sue-pulls1)
+          (pullingo sue-lazy?2 sue sue-pulls2)
+          (pullingo sue-lazy?3 sue sue-pulls3)
 			  
-			  (fresh (sue-wins1 sue-wins2 sue-wins3)
-				 (>o sue-pulls1 bob-pulls1 sue-wins1)
-				 (== sue-wins1 #t)
+          (fresh (sue-wins1 sue-wins2 sue-wins3)
+            (>o sue-pulls1 bob-pulls1 sue-wins1)
+            (== sue-wins1 #t)
 
-				 (>o sue-pulls2 bob-pulls2 sue-wins2)
-				 (== sue-wins2 #t)
+            (>o sue-pulls2 bob-pulls2 sue-wins2)
+            (== sue-wins2 #t)
 
-				 (>o sue-pulls3 bob-pulls3 sue-wins3)
-				 (== sue-wins3 #t)))
+            (>o sue-pulls3 bob-pulls3 sue-wins3)
+            (== sue-wins3 #t)))
 
-		   (== q (list bob sue))))))
+        (== q (list bob sue))))))
 
 (define tug-of-war2
   (lambda (samples)
@@ -367,13 +367,13 @@
 	(fresh (bob-lazy sue-lazy)
 	  (repeato 3 (lambda (x) (flip 0.25 x)) bob-lazy)
 	  (repeato 3 (lambda (x) (flip 0.25 x)) sue-lazy)
-           
+          
           (fresh (bob-pulls sue-pulls)
             (map-goalo (lambda (x g)
 			 (pullingo x bob g)) bob-lazy bob-pulls)
 	    (map-goalo (lambda (x g)
 			 (pullingo x sue g)) sue-lazy sue-pulls)
-
+            
 	    (fresh (sue-wins)
               (zipwitho >o sue-pulls bob-pulls sue-wins)
 	      (seq-goalo (lambda (x) (== x #t)) sue-wins))))

@@ -24,7 +24,7 @@
       ((fresh (a d v res)
          (== `(,a . ,d) ls)
          (== `(,v . ,res) out)
-         (f x v)
+         (f a v)
          (map-goalo f d res))))))
 
 (define zipwitho
