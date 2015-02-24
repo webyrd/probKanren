@@ -1,3 +1,11 @@
+(define printg
+  (lambda (format-str . args)
+    (lambda (sk fk c)
+      (let ((args (walk* args (get-s c))))
+        (apply printf format-str args))
+      (newline)
+      (sk fk c))))
+
 (define repeato
   (lambda (n f q)
     (cond

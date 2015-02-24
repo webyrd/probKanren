@@ -363,20 +363,28 @@
       (fresh (bob sue)
 	(normal 0.0 1.0 bob)
 	(normal 0.0 1.0 sue)
-	
+        (printg "tow2 1")
+        
 	(fresh (bob-lazy sue-lazy)
 	  (repeato 3 (lambda (x) (flip 0.25 x)) bob-lazy)
+          (printg "tow2 2")
 	  (repeato 3 (lambda (x) (flip 0.25 x)) sue-lazy)
+          (printg "tow2 3")
           
           (fresh (bob-pulls sue-pulls)
+            (printg "tow2 4 bob: ~s bob-lazy: ~s bob-pulls: ~s" bob bob-lazy bob-pulls)
             (map-goalo (lambda (x g)
 			 (pullingo x bob g)) bob-lazy bob-pulls)
+            (printg "tow2 5 bob: ~s bob-lazy: ~s bob-pulls: ~s" bob bob-lazy bob-pulls)
 	    (map-goalo (lambda (x g)
 			 (pullingo x sue g)) sue-lazy sue-pulls)
+            (printg "tow2 6 sue: ~s sue-lazy: ~s sue-pulls: ~s" sue sue-lazy sue-pulls)
             
 	    (fresh (sue-wins)
               (zipwitho >o sue-pulls bob-pulls sue-wins)
-	      (seq-goalo (lambda (x) (== x #t)) sue-wins))))
+              (printg "tow2 7")
+	      (seq-goalo (lambda (x) (== x #t)) sue-wins)
+              (printg "tow2 8"))))
 	(== q (list bob sue))))))
 
 ;; Example run-mh can be found in comments for the non-deterministic
