@@ -312,7 +312,7 @@
   '((4 7 5 35) (4 7 5 35) (4 7 5 35) (4 7 5 35) (4 7 5 35))) 
 
 
-
+#|
 (define pullingo
   (lambda (lazy? strength pulls)
     (conde
@@ -320,8 +320,23 @@
        (/o strength 2 pulls)]
       [(== lazy? #f)
        (== strength pulls)])))
+|#
 
-(define tug-of-war
+(define pullingo
+  (lambda (lazy? strength pulls)
+    (fresh ()
+      (printg "pull 1 lazy?: ~s  strength: ~s  pulls: ~s" lazy? strength pulls)
+      (conde
+        [(== lazy? #t)
+         (printg "pull 2 lazy?: ~s  strength: ~s  pulls: ~s" lazy? strength pulls)
+         (/o strength 2 pulls)
+         (printg "pull 3 lazy?: ~s  strength: ~s  pulls: ~s" lazy? strength pulls)]
+        [(== lazy? #f)
+         (printg "pull 4 lazy?: ~s  strength: ~s  pulls: ~s" lazy? strength pulls)
+         (== strength pulls)
+         (printg "pull 5 lazy?: ~s  strength: ~s  pulls: ~s" lazy? strength pulls)]))))
+
+(define tug-of-war  
   (lambda (samples)
     (run-mh samples (q)
       (fresh (bob sue bob-lazy?1 sue-lazy?1 bob-lazy?2 sue-lazy?2 bob-lazy?3 sue-lazy?3)
@@ -375,7 +390,7 @@
             (printg "tow2 4 bob: ~s bob-lazy: ~s bob-pulls: ~s" bob bob-lazy bob-pulls)
             (map-goalo (lambda (x g)
 			 (pullingo x bob g)) bob-lazy bob-pulls)
-            (printg "tow2 5 bob: ~s bob-lazy: ~s bob-pulls: ~s" bob bob-lazy bob-pulls)
+            (printg "tow2 5 bob: ~s bob-lazy: ~s bob-pulls: ~s" bob bob-lazy bob-pulls)            
 	    (map-goalo (lambda (x g)
 			 (pullingo x sue g)) sue-lazy sue-pulls)
             (printg "tow2 6 sue: ~s sue-lazy: ~s sue-pulls: ~s" sue sue-lazy sue-pulls)
