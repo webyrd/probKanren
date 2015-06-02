@@ -1,0 +1,34 @@
+(run 1 (mh proposal prog))
+
+(define proposal
+  (lambda (x q x' q')
+    (fresh (b)
+      (flip 0.5 b)
+        (conde
+          [(== b #t) (normal 0 1 x') (== q q')]
+          [(== b #f) (== x x') (normal x 1 q')]))))
+
+(define prog
+ (fresh (x q)
+   (normal 0 1 x)
+   (normal x 1 q)))
+
+(define density
+  (lambda (total-density x q)
+   (fresh (dx)
+    (normal-density 0 1 x dx)
+    (fresh (dq)
+      (normal-density x 1 q dq)
+      (fresh (total-density)
+        (== total-density (+ dq dx)))))))
+
+(define mh
+  (lambda (prop prog x q x'' q'' density-xq density-xq')
+      (fresh (x' q' b)
+        (prop x q x' q')
+        (density density-xq  x  q )
+        (density density-xq' x' q')
+        (flip (min 1 (/ density-xq' density-xq)) b)
+        (conde
+         [(== b #t) (== x' x'') (== q' q'')]
+         [(== b #f) (== x  x'') (== q  q'')]))))
