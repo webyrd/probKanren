@@ -42,12 +42,23 @@
         [(== b #t) (== x^ x^^) (== q^ q^^)]
         [(== b #f) (== x  x^^) (== q  q^^)]))))
 
-(run 1 (x^^ q^^ density-xq density-xq^)
+(define prog2-chain
+  (lambda (len x q ls)
+    (conde
+      [(== 0 len) (== '() ls)]
+      [(== 1 len) (== (list (list x q)) ls)]
+      [(>o len 1 #t)
+       (fresh (d density-xq density-xq^  x^^ q^^ len-1)
+         (== `((,x ,q) . ,d) ls)
+         (prog2-mh prog2-proposal x q x^^ q^^ density-xq density-xq^)
+         (minuso len 1 len-1)
+         (prog2-chain len-1 x^^ q^^ d))])))
+
+(run 1 (ls)
   (fresh (x q)
     (== 1.0 x)
     (== 1.2 q)
-    (prog2-mh prog2-proposal x q x^^ q^^ density-xq density-xq^)))
-
+    (prog2-chain 10 x q ls)))
 
 (define importance
   (lambda (prog density-value)
