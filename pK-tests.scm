@@ -61,3 +61,18 @@
     (uniform 0.0 1.0 x)
     (flip x #t))
   '(0.4530346801796503))
+
+(test-random "normal-1"
+  (run* (x)
+    (normal 0.0 1.0 x))
+  '(-1.1740941342295155))
+
+(test "normal-density-1"
+  (run* (q)
+    (normal-density 0.0 0.0 1.0 q))
+  '(-0.9189385332046727))
+
+(test "normal-density-2"
+  (run* (q)
+    (normal-density 3.0 2.0 5.0 q))
+  '(-2.548376445638773))
