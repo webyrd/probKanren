@@ -1,18 +1,45 @@
 (load "mk.scm")
 
+;; (define uniform
+;;   (lambda (lo hi x)
+;;     (delayed-goal `(,lo ,hi)
+;;       (project (lo hi x)
+;;         (let ((samp (+ (random (- hi lo)) lo)))
+;;           (== x samp))))))
+
 (define uniform
   (lambda (lo hi x)
     (delayed-goal `(,lo ,hi)
       (project (lo hi x)
-        (let ((samp (+ (random (- hi lo)) lo)))
-          (== x samp))))))
+        (if (ground? x)
+            succeed
+            (let ((samp (+ (random (- hi lo)) lo)))
+              (== x samp)))))))
+
+;; (define flip
+;;   (lambda (p x)
+;;     (delayed-goal p
+;;       (project (p x)
+;;         (let ((samp (random 1.0)))
+;;           (== (<= samp p) x))))))
 
 (define flip
   (lambda (p x)
     (delayed-goal p
       (project (p x)
-        (let ((samp (random 1.0)))
-          (== (<= samp p) x))))))
+        (if (ground? x)
+            succeed
+            (let ((samp (random 1.0)))
+              (== (<= samp p) x)))))))
+
+;; (define normal
+;;   (lambda (mu sd x)
+;;     (delayed-goal `(,mu ,sd)
+;;       (project (mu sd x)
+;;         (begin
+;;           (when (< sd 0)
+;;             (error 'normal "given invalid parameters"))
+;;           (== (+ mu (* sd (car (marsaglia)))) x))))))
 
 (define normal
   (lambda (mu sd x)
@@ -21,7 +48,9 @@
         (begin
           (when (< sd 0)
             (error 'normal "given invalid parameters"))
-          (== (+ mu (* sd (car (marsaglia)))) x))))))
+          (if (ground? x)
+              succeed
+              (== (+ mu (* sd (car (marsaglia)))) x)))))))
 
 (define normal-density
   (lambda (x mu sd out)
@@ -33,6 +62,7 @@
             (== (/ (+ (* (- tau) (sq (- x mu)))
                       (log (/ tau pi 2))) 2)
                 out)))))))
+
 
 (define uniform-sample
   (lambda (lo hi)

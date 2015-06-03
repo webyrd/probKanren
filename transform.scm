@@ -1,4 +1,5 @@
 (load "mk.scm")
+(load "mkdefs.scm")
 (load "delayed-goal-defs.scm")
 (load "test-check.scm")
 
@@ -25,10 +26,24 @@
 (define prog2-proposal
   (lambda (x q x^ q^)
     (fresh (b)
-      (flip 0.5 b)
-      (conde
-        [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
-        [(== b #f) (== x x^) (normal x 1.0 q^)]))))
+
+      ;; conditioning!
+      (== 2.0 x^)
+
+      ;; super chobo hack
+      (onceo
+        (fresh ()
+          alwayso
+          (flip 0.5 b)
+          (conde
+            [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
+            [(== b #f) (== x x^) (normal x 1.0 q^)])))
+
+      ;; (conde
+      ;;   [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
+      ;;   [(== b #f) (== x x^) (normal x 1.0 q^)])
+
+      )))
 
 (define prog2-density
   (lambda (total-density q x)
@@ -57,7 +72,7 @@
       [(== 0 len) (== '() ls)]
       [(== 1 len) (== (list (list x q)) ls)]
       [(>o len 1 #t)
-       (fresh (d density-xq density-xq^  x^^ q^^ len-1)
+       (fresh (d density-xq density-xq^ x^^ q^^ len-1)
          (== `((,x ,q) . ,d) ls)
          (prog2-mh x q x^^ q^^ density-xq density-xq^)
          (minuso len 1 len-1)
@@ -70,15 +85,15 @@
       (== 1.2 q)
       (prog2-chain 10 x q ls)))
   '(((1.0 1.2)
-     (-0.8755948399394972 1.2)
-     (-0.8755948399394972 -2.88744391732116)
-     (0.4702758524429722 -2.88744391732116)
-     (0.4702758524429722 0.46741683559566044)
-     (0.4702758524429722 1.054564939766291)
-     (-1.9013778493668034 1.054564939766291)
-     (-1.9013778493668034 1.054564939766291)
-     (-1.9013778493668034 1.054564939766291)
-     (-1.9013778493668034 1.054564939766291))))
+     (2.0 1.2)
+     (2.0 1.2)
+     (2.0 -0.011849077381663076)
+     (2.0 -0.011849077381663076)
+     (2.0 -0.011849077381663076)
+     (2.0 1.9971409831526883)
+     (2.0 2.584289087323319)
+     (2.0 2.584289087323319)
+     (2.0 2.8431895358811774))))
 
 (test-random "prog2-density"
   (run 1 (total-density q x)
