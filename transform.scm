@@ -14,6 +14,33 @@
 ;;     (density prog density-value)))
 
 
+;; TODO: Next example to try to hand-compile:
+(define prog3
+  (lambda (x b)
+    (fresh ()
+      (flip 0.5 b)
+      (conde
+        [(== #t b) (normal 0.0 1.0 x)]
+        [(== #f b) (uniform 0.0 1.0 x)]))))
+
+;; TODO: Another example to try to hand-compile:
+(define prog4
+  (lambda (q b)
+    (fresh ()
+      (flip 0.5 b)
+      (conde
+        [(== #t b)
+         (fresh (y)
+           (normal 0.0 1.0 x)
+           (normal 0.0 1.0 y)
+           (== (list x y) q))]
+        [(== #f b)
+         (uniform 0.0 1.0 x)
+         (== (list x) q)]))))
+
+;; TODO: after trying prog3 and prog4, write the program transformations
+      
+
 
 ;; full worked example:
 
