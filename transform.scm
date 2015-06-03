@@ -30,7 +30,8 @@
       ;; conditioning!
       (== 2.0 x^)
 
-      ;; super chobo hack
+      ;; Super chobo hack, needed only when the conditioning value and
+      ;; the initial value are inconsistent:
       (onceo
         (fresh ()
           alwayso
@@ -39,6 +40,9 @@
             [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
             [(== b #f) (== x x^) (normal x 1.0 q^)])))
 
+      ;; If we insist the conditioning value and the initial value are
+      ;; consistent, we can use this code:
+      ;;
       ;; (conde
       ;;   [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
       ;;   [(== b #f) (== x x^) (normal x 1.0 q^)])
