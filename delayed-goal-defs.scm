@@ -1,13 +1,5 @@
 (load "mk.scm")
 
-
-;; old version of uniform-sample
-; (define uniform-sample
-;   (lambda (lo hi)
-;     (let ((samp (+ (random (- hi lo)) lo)))
-;       samp)))
-
-
 (define uniform
   (lambda (lo hi x)
     (delayed-goal `(,lo ,hi)
@@ -15,7 +7,12 @@
         (let ((samp (+ (random (- hi lo)) lo)))
           (== x samp))))))
 
-
+(define flip
+  (lambda (p x)
+    (delayed-goal p
+      (project (p x)
+        (let ((samp (random 1.0)))
+          (== (<= samp p) x))))))
 
 
 
