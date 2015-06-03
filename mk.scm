@@ -26,10 +26,10 @@
                (add-dg p (cons t g)))))))))
 
 
-
 (define-syntax run*
   (syntax-rules ()
-    ((_ (x) g ...) (run #f (x) g ...))))
+    ((_ (q0 q ...) g0 g ...) (run #f (q0 q ...) g0 g ...))))
+
 
 (define-syntax rhs
   (syntax-rules ()
@@ -86,9 +86,11 @@
             (lambdag@ (p)
               (begin
                 (unless (null? (p->dg* p))
-                  (error 'run "Delayed goals list is non-empty at end of run"))              
+                  (error 'run "Delayed goals list is non-empty at end of run"))
                 (cons (reify x p) '()))))
-          empty-p))))))
+          empty-p))))
+    ((_ n (q0 q1 q ...) g0 g ...)
+     (run n (x) (fresh (q0 q1 q ...) g0 g ... (== `(,q0 ,q1 ,q ...) x))))))
 
 
 

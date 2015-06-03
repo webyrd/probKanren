@@ -1,29 +1,7 @@
 (load "mk.scm")
+(load "delayed-goal-defs.scm")
 (load "test-check.scm")
 
-(define pluso
-  (lambda (x y z)
-    (delayed-goal `(,x ,y)
-      (project (x y z)
-        (== (+ x y) z)))))
-
-(define *o
-  (lambda (x y z)
-    (delayed-goal `(,x ,y)
-      (project (x y z)
-        (== (* x y) z)))))
-
-(define /o
-  (lambda (x y z)
-    (delayed-goal `(,x ,y)
-      (project (x y z)
-        (== (/ x y) z)))))
-
-(define >o
-  (lambda (x y z)
-    (delayed-goal `(,x ,y)
-      (project (x y z)
-        (== (> x y) z)))))
 
 
 (test "dg-1"
