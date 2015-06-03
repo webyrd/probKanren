@@ -25,41 +25,6 @@
                (g p)
                (add-dg p (cons t g)))))))))
 
-(define ground?
-  (lambda (t)
-    (cond
-      ((var? t) #f)
-      ((pair? t)
-       (and (ground? (car t)) (ground? (cdr t))))
-      (else #t))))
-
-;; do we need to keep delayed goals around, after they have been run?
-(define solve-delayed-goals
-  (lambda (p)
-    (let ((dg* (p->dg* p)))
-      (let loop ((unseen-dg* dg*)
-                 (seen-dg* '()))
-        (cond
-          ((null? unseen-dg*)
-           (let ((p (update-p-with-dg* p seen-dg*)))
-             p))
-          (else
-           (let ((delayed-t/g (car unseen-dg*)))
-             (let ((t (car delayed-t/g))
-                   (g (cdr delayed-t/g)))
-               (let ((t (walk* t (p->s p))))
-                 (if (ground? t)
-                     (let ((p (update-p-with-dg*
-                               p
-                               (append
-                                seen-dg*
-                                (cdr unseen-dg*)))))
-                       ;; I'm not sure about this part...
-                       (solve-delayed-goals p))
-                     (loop (cdr unseen-dg*)
-                           (cons delayed-t/g seen-dg*))))))))))))
-
-
 
 
 (define-syntax run*
@@ -86,6 +51,85 @@
   (syntax-rules ()
     ((_ x) (vector? x))))
 
+
+(define-syntax mzero 
+  (syntax-rules () ((_) #f)))
+
+(define-syntax inc 
+  (syntax-rules () ((_ e) (lambdaf@ () e))))
+
+(define-syntax unit 
+  (syntax-rules () ((_ a) a)))
+
+(define-syntax choice 
+  (syntax-rules () ((_ a f) (cons a f))))
+
+(define-syntax case-inf
+  (syntax-rules ()
+    ((_ e (() e0) ((f^) e1) ((a^) e2) ((a f) e3))
+     (let ((a-inf e))
+       (cond
+         ((not a-inf) e0)
+         ((procedure? a-inf)  (let ((f^ a-inf)) e1))
+         ((not (and (pair? a-inf)
+                    (procedure? (cdr a-inf))))
+          (let ((a^ a-inf)) e2))
+         (else (let ((a (car a-inf)) (f (cdr a-inf))) 
+                 e3)))))))
+
+(define-syntax run
+  (syntax-rules ()
+    ((_ n (x) g0 g ...)
+     (take n
+       (lambdaf@ ()
+         ((fresh (x) g0 g ... 
+            (lambdag@ (p)
+              (begin
+                (unless (null? (p->dg* p))
+                  (error 'run "Delayed goals list is non-empty at end of run"))              
+                (cons (reify x p) '()))))
+          empty-p))))))
+
+
+
+
+
+(define ground?
+  (lambda (t)
+    (cond
+      ((var? t) #f)
+      ((pair? t)
+       (and (ground? (car t)) (ground? (cdr t))))
+      (else #t))))
+
+(define solve-delayed-goals
+  (lambda (p) ; p = (s dg*), where dg = (t g), and where t is a term we
+         ; check for groundness and g is a goal to be run when t
+         ; becomes ground
+    (let ((dg* (p->dg* p)))
+      (let loop ((unseen-dg* dg*)
+                 (seen-dg* '()))
+        (cond
+          ((null? unseen-dg*)
+           (let ((p (update-p-with-dg* p seen-dg*)))
+             (unit p)))
+          (else
+           (let ((delayed-t/g (car unseen-dg*)))
+             (let ((t (car delayed-t/g))
+                   (g (cdr delayed-t/g)))
+               (let ((t (walk* t (p->s p))))
+                 (if (ground? t)
+                     (let ((dg* (append seen-dg* (cdr unseen-dg*))))
+                       (let ((p (update-p-with-dg* p dg*)))
+                         (bind
+                           (g p) ; run g
+                           solve-delayed-goals)))                    
+                     (loop (cdr unseen-dg*)
+                           (cons delayed-t/g seen-dg*))))))))))))
+
+
+
+
 (define empty-s '())
 
 (define empty-dg* '())
@@ -97,7 +141,7 @@
 
 (define update-p-with-s
   (lambda (p s)
-    (list s (p->dg p))))
+    (list s (p->dg* p))))
 
 (define update-p-with-dg*
   (lambda (p dg*)
@@ -186,42 +230,6 @@
       (let ((v (walk* v s)))
         (walk* v (reify-s v empty-s))))))
 
-(define-syntax mzero 
-  (syntax-rules () ((_) #f)))
-
-(define-syntax inc 
-  (syntax-rules () ((_ e) (lambdaf@ () e))))
-
-(define-syntax unit 
-  (syntax-rules () ((_ a) a)))
-
-(define-syntax choice 
-  (syntax-rules () ((_ a f) (cons a f))))
-
-(define-syntax case-inf
-  (syntax-rules ()
-    ((_ e (() e0) ((f^) e1) ((a^) e2) ((a f) e3))
-     (let ((a-inf e))
-       (cond
-         ((not a-inf) e0)
-         ((procedure? a-inf)  (let ((f^ a-inf)) e1))
-         ((not (and (pair? a-inf)
-                    (procedure? (cdr a-inf))))
-          (let ((a^ a-inf)) e2))
-         (else (let ((a (car a-inf)) (f (cdr a-inf))) 
-                 e3)))))))
-
-(define-syntax run
-  (syntax-rules ()
-    ((_ n (x) g0 g ...)
-     (take n
-       (lambdaf@ ()
-         ((fresh (x) g0 g ... 
-            (lambdag@ (p)
-              (unless (null? (p->dg p))
-                (error 'run "Delayed goals list is non-empty at end of run"))              
-              (cons (reify x p) '())))
-          empty-p))))))
 
 (define take
   (lambda (n f)
