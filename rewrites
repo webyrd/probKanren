@@ -1,0 +1,50 @@
+;; We need to track
+;;
+;; 1. Which variables are resampleable
+;; 2. What are the densities of each variable
+;; 3. What is the distribution of variable
+
+(run 1 (q)
+  (mh proposal (fresh (x)
+                 (conde
+                  [(fresh (y)
+                     (normal 0 1 y) (normal  0 1 x))]
+                  [(uniform 0 1 x)])
+                 (normal x 1 q))))
+
+(define proposal2
+  (lambda (env env')
+    (fresh (var)
+      (uniform-discrete env var)
+      (conde
+       [(== var 'x) (fresh (b x')
+                      (flip 0.5 b)
+                      (conde
+                       [(== b #t) (normal  0 1 x')] 
+                       [(== b #f) (uniform 0 1 x')])
+                    (replace var x' env env'))]
+       [(== var 'y) (fresh (y')
+                      (normal 0 1 y')
+                      (replace var y' env env'))]
+       [(== var 'q) (fresh (q')
+                      (normal (lookup 'x env) 1 q')
+                      (replace var q' env env'))]))))
+
+(define proposal
+  (lambda (x q x' q')
+    (fresh (b)
+      (flip 0.5 b)
+        (conde
+          [(== b #t) (normal 0 1 x') (== q q')]
+          [(== b #f) (== x x') (normal x 1 q')]))))
+           
+(define mh
+  (lambda (prop prog x q x'' q'')
+      (fresh (x' q' b)
+        (prop x q x' q')
+        (flip (min 1 (/ (density prog (cons x' q'))
+                        (density prog (cons x  q )))) b)
+        (conde
+         [(== b #t) (== x' x'') (== q' q'')]
+         [(== b #f) (== x  x'') (== q  q'')]))))
+
