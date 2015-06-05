@@ -23,6 +23,24 @@
         [(== #t b) (normal 0.0 1.0 x)]
         [(== #f b) (uniform 0.0 1.0 x)]))))
 
+(define prog3-proposal
+  (lambda (x b x^ b^)
+    (fresh (b1)
+      (flip 0.5 b1)
+      (conde
+        [(== b1 #t) ;; b1 is true resample the b in flip
+	 (flip 0.5 b^)
+	 (conde
+	  [(== b^ #t) (== x x^) (normal 0.0 1.0 x^)]
+	  [(== b^ #f) (== x x^) (uniform 0.0 1.0 x^)])]
+        [(== b1 #f) ;; b1 is false resample whatever x is
+	 (conde ;; so was x normal or uniform?
+	  [(== b #t) (normal 0.0 1.0 x^) (== b b^)]
+	  [(== b #f) (uniform 0.0 1.0 x^) (== b b^)])]
+      ))))
+
+
+
 ;; TODO: Another example to try to hand-compile:
 (define prog4
   (lambda (q b)
