@@ -31,8 +31,8 @@
         [(== b1 #t) ;; b1 is true resample the b in flip
 	 (flip 0.6 b^)
 	 (conde
-           [(== b^ #t) (== x x^) (normal 0.0 1.0 x^)]
-           [(== b^ #f) (== x x^) (uniform 0.0 1.0 x^)])]
+           [(== b^ #t) (== x x^)]
+           [(== b^ #f) (== x x^)])]
         [(== b1 #f) ;; b1 is false resample whatever x is
 	 (conde     ;; so was x normal or uniform?
            [(== b #t) (normal 0.0 1.0 x^) (== b b^)]
@@ -64,6 +64,7 @@
         [(== #f b)
          (uniform 0.0 1.0 x)
          (== (list x) q)]))))
+
 
 ;; TODO: after trying prog3 and prog4, write the program transformations
       
