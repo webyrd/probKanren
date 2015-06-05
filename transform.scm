@@ -18,7 +18,7 @@
 (define prog3
   (lambda (x b)
     (fresh ()
-      (flip 0.5 b)
+      (flip 0.6 b)
       (conde
         [(== #t b) (normal 0.0 1.0 x)]
         [(== #f b) (uniform 0.0 1.0 x)]))))
@@ -29,7 +29,7 @@
       (flip 0.5 b1)
       (conde
         [(== b1 #t) ;; b1 is true resample the b in flip
-	 (flip 0.5 b^)
+	 (flip 0.6 b^)
 	 (conde
 	  [(== b^ #t) (== x x^) (normal 0.0 1.0 x^)]
 	  [(== b^ #f) (== x x^) (uniform 0.0 1.0 x^)])]
