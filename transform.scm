@@ -31,13 +31,13 @@
         [(== b1 #t) ;; b1 is true resample the b in flip
 	 (flip 0.6 b^)
 	 (conde
-	  [(== b^ #t) (== x x^) (normal 0.0 1.0 x^)]
-	  [(== b^ #f) (== x x^) (uniform 0.0 1.0 x^)])]
+           [(== b^ #t) (== x x^) (normal 0.0 1.0 x^)]
+           [(== b^ #f) (== x x^) (uniform 0.0 1.0 x^)])]
         [(== b1 #f) ;; b1 is false resample whatever x is
-	 (conde ;; so was x normal or uniform?
-	  [(== b #t) (normal 0.0 1.0 x^) (== b b^)]
-	  [(== b #f) (uniform 0.0 1.0 x^) (== b b^)])]
-      ))))
+	 (conde     ;; so was x normal or uniform?
+           [(== b #t) (normal 0.0 1.0 x^) (== b b^)]
+           [(== b #f) (uniform 0.0 1.0 x^) (== b b^)])]
+        ))))
 
 (define prog3-density
   (lambda (total-density b x)
@@ -45,8 +45,8 @@
       (flip-density b 0.6 db)
       (fresh (dx)
 	(conde
-	 [(== b #t) (normal-density x 0.0 1.0 dx)]
-	 [(== b #f) (uniform-density x 0.0 1.0 dx)])
+          [(== b #t) (normal-density x 0.0 1.0 dx)]
+          [(== b #f) (uniform-density x 0.0 1.0 dx)])
         (pluso db dx total-density)))))
 
 
