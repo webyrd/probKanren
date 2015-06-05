@@ -39,6 +39,15 @@
 	  [(== b #f) (uniform 0.0 1.0 x^) (== b b^)])]
       ))))
 
+(define prog3-density
+  (lambda (total-density b x)
+    (fresh (db)
+      (flip-density b 0.6 db)
+      (fresh (dx)
+	(conde
+	 [(== b #t) (normal-density x 0.0 1.0 dx)]
+	 [(== b #f) (uniform-density x 0.0 1.0 dx)])
+        (pluso db dx total-density)))))
 
 
 ;; TODO: Another example to try to hand-compile:

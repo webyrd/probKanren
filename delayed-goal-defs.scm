@@ -16,6 +16,15 @@
             (let ((samp (+ (random (- hi lo)) lo)))
               (== x samp)))))))
 
+(define uniform-density
+  (lambda (x lo hi dx)
+    (delayed-goal `(,x ,lo ,hi)
+      (project (x lo hi dx)
+	(== (if (and (>= x lo) (<= x hi))
+		(log (/ (- hi lo)))
+		(log 0.0))
+	    dx)))))
+
 ;; (define flip
 ;;   (lambda (p x)
 ;;     (delayed-goal p
@@ -31,6 +40,13 @@
             succeed
             (let ((samp (random 1.0)))
               (== (<= samp p) x)))))))
+
+(define flip-density
+  (lambda (x p dx)
+    (delayed-goal `(,x ,p)
+      (project (x p dx)
+	(== (log (if x p (- 1 p)))
+	    dx)))))
 
 ;; (define normal
 ;;   (lambda (mu sd x)
@@ -53,15 +69,15 @@
               (== (+ mu (* sd (car (marsaglia)))) x)))))))
 
 (define normal-density
-  (lambda (x mu sd out)
+  (lambda (x mu sd dx)
     (delayed-goal `(,x ,mu ,sd)
-      (project (x mu sd out)
+      (project (x mu sd dx)
         (let ((sq (lambda (x) (* x x))))
           (let ((tau (/ (sq sd)))
                 (pi 3.141592653589793))
             (== (/ (+ (* (- tau) (sq (- x mu)))
                       (log (/ tau pi 2))) 2)
-                out)))))))
+                dx)))))))
 
 
 (define uniform-sample
