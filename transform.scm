@@ -14,7 +14,77 @@
 ;;   (lambda (prog density-value)
 ;;     (density prog density-value)))
 
+;;;
 
+(define prog2
+  (lambda (q x)
+    (fresh ()
+      (normal 0.0 1.0 x)
+      (normal x 1.0 q))))
+
+(define prog2-proposal
+  (lambda (init-vars new-vars)
+    (fresh (x q x^ q^)
+      (== (list x q) init-vars)
+      (== (list x^ q^) new-vars)
+      (fresh (b)
+        (flip 0.5 b)
+        (conde
+          [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
+          [(== b #f) (== x x^) (normal x 1.0 q^)])))))
+
+(define prog2-density
+  (lambda (total-density vars)
+    (fresh (x q)
+      (== (list x q) vars)
+      (fresh (dx)
+        (normal-density x 0.0 1.0 dx)
+        (fresh (dq)
+          (normal-density q x 1.0 dq)
+          (pluso dq dx total-density))))))
+
+
+
+;;; conditioning version of prog2
+
+(define prog2-c
+  (lambda (q x)
+    (fresh ()
+      (== 2.0 x)
+      (normal 0.0 1.0 x)
+      (normal x 1.0 q))))
+
+(define prog2-proposal-c
+  (lambda (init-vars new-vars)
+    (fresh (x q x^ q^)
+      (== (list x q) init-vars)
+      (== (list x^ q^) new-vars)
+      (fresh (b)
+
+        ;; conditioning!
+        (== 2.0 x^)
+
+        ;; Super chobo hack, needed only when the conditioning value and
+        ;; the initial value are inconsistent:
+        (onceo
+         (fresh ()
+           alwayso
+           (flip 0.5 b)
+           (conde
+             [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
+             [(== b #f) (== x x^) (normal x 1.0 q^)])))
+
+        ;; If we insist the conditioning value and the initial value are
+        ;; consistent, we can use this code:
+        ;;
+        ;; (conde
+        ;;   [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
+        ;;   [(== b #f) (== x x^) (normal x 1.0 q^)])
+
+        ))))
+
+
+;;;
 
 (define prog3
   (lambda (x b)
@@ -54,7 +124,7 @@
             [(== b #f) (uniform-density x 0.0 1.0 dx)])
           (pluso db dx total-density))))))
 
-
+;;;
 
 (define prog4
   (lambda (q b)
@@ -70,8 +140,6 @@
           [(== #f b)
            (uniform 0.0 1.0 x)
            (== (list x) q)])))))
-
-
 
 (define prog4-proposal
   (lambda (init-vars new-vars)
@@ -146,134 +214,7 @@
              (uniform-density a 0.0 1.0 dq))])
         (pluso db dq total-density)))))
 
-
-
-
-;; TODO: after trying prog3 and prog4, write the program transformations
-      
-
-
-;; full worked example:
-
-(define prog2
-  (lambda (q x)
-    (fresh ()
-      (normal 0.0 1.0 x)
-      (normal x 1.0 q))))
-
-(define prog2-c
-  (lambda (q x)
-    (fresh ()
-      (== 2.0 x)
-      (normal 0.0 1.0 x)
-      (normal x 1.0 q))))
-
-(define prog2
-  (lambda (q x)
-    (fresh ()
-      (normal 0.0 1.0 x)
-      (normal x 1.0 q))))
-
-(define prog2-proposal
-  (lambda (x q x^ q^)
-    (fresh (b)
-      (flip 0.5 b)
-      (conde
-        [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
-        [(== b #f) (== x x^) (normal x 1.0 q^)])
-      )))
-
-(define prog2-proposal-c
-  (lambda (x q x^ q^)
-    (fresh (b)
-
-      ;; conditioning!
-      (== 2.0 x^)
-
-      ;; Super chobo hack, needed only when the conditioning value and
-      ;; the initial value are inconsistent:
-      (onceo
-        (fresh ()
-          alwayso
-          (flip 0.5 b)
-          (conde
-            [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
-            [(== b #f) (== x x^) (normal x 1.0 q^)])))
-
-      ;; If we insist the conditioning value and the initial value are
-      ;; consistent, we can use this code:
-      ;;
-      ;; (conde
-      ;;   [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
-      ;;   [(== b #f) (== x x^) (normal x 1.0 q^)])
-
-      )))
-
-(define prog2-density
-  (lambda (total-density q x)
-    (fresh (dx)
-      (normal-density x 0.0 1.0 dx)
-      (fresh (dq)
-        (normal-density q x 1.0 dq)
-        (pluso dq dx total-density)))))
-
-(define prog2-mh
-  (lambda (x q x^^ q^^ density-xq density-xq^)
-    (fresh (x^ q^ b ratio accept)
-      (prog2-proposal x q x^ q^)
-      (prog2-density density-xq  x  q )
-      (prog2-density density-xq^ x^ q^)
-      (/o density-xq^ density-xq ratio)
-      (mino 1.0 ratio accept)
-      (flip accept b)
-      (conde
-        [(== b #t) (== x^ x^^) (== q^ q^^)]
-        [(== b #f) (== x  x^^) (== q  q^^)]))))
-
-(define prog2-chain
-  (lambda (len x q ls)
-    (conde
-      [(== 0 len) (== '() ls)]
-      [(== 1 len) (== (list (list x q)) ls)]
-      [(>o len 1 #t)
-       (fresh (d density-xq density-xq^ x^^ q^^ len-1)
-         (== `((,x ,q) . ,d) ls)
-         (prog2-mh x q x^^ q^^ density-xq density-xq^)
-         (minuso len 1 len-1)
-         (prog2-chain len-1 x^^ q^^ d))])))
-
-(define prog2-density-c
-  (lambda (total-density q x)
-    (fresh (dx)
-      (normal-density x 0.0 1.0 dx)
-      (fresh (dq)
-        (normal-density q x 1.0 dq)
-        (pluso dq dx total-density)))))
-
-(define prog2-mh-c
-  (lambda (x q x^^ q^^ density-xq density-xq^)
-    (fresh (x^ q^ b ratio accept)
-      (prog2-proposal-c x q x^ q^)
-      (prog2-density-c density-xq  x  q )
-      (prog2-density-c density-xq^ x^ q^)
-      (/o density-xq^ density-xq ratio)
-      (mino 1.0 ratio accept)
-      (flip accept b)
-      (conde
-        [(== b #t) (== x^ x^^) (== q^ q^^)]
-        [(== b #f) (== x  x^^) (== q  q^^)]))))
-
-(define prog2-chain-c
-  (lambda (len x q ls)
-    (conde
-      [(== 0 len) (== '() ls)]
-      [(== 1 len) (== (list (list x q)) ls)]
-      [(>o len 1 #t)
-       (fresh (d density-xq density-xq^ x^^ q^^ len-1)
-         (== `((,x ,q) . ,d) ls)
-         (prog2-mh-c x q x^^ q^^ density-xq density-xq^)
-         (minuso len 1 len-1)
-         (prog2-chain-c len-1 x^^ q^^ d))])))
+;;;
 
 
 
@@ -313,30 +254,19 @@
 
 
 
-
+;;; tests
 
 (test-random "prog2-chain-1"
   (run 1 (ls)
     (fresh (x q)
       (== 1.0 x)
       (== 1.2 q)
-      (prog2-chain 12 x q ls)))
-  '(((1.0 1.2)
-     (-0.8755948399394972 1.2)
-     (-0.8755948399394972 -2.88744391732116)
-     (0.4702758524429722 -2.88744391732116)
-     (0.4702758524429722 0.46741683559566044)
-     (0.4702758524429722 1.054564939766291)
-     (-1.9013778493668034 1.054564939766291)
-     (-1.9013778493668034 1.054564939766291)
-     (-1.9013778493668034 1.054564939766291)
-     (-1.9013778493668034 1.054564939766291)
-     (0.08518168064943167 1.054564939766291)
-     (0.08518168064943167 1.6422555569972688))))
+      (chain 12 (list x q) prog2-proposal prog2-density ls)))
+  '(((1.0 1.2) (-0.8755948399394972 1.2) (-0.8755948399394972 -2.88744391732116) (-0.8755948399394972 -2.88744391732116) (-0.8755948399394972 -0.8784538567868089) (-0.8755948399394972 -0.2913057526161784) (-0.8755948399394972 -0.2913057526161784) (-0.8755948399394972 -1.4966988999433553) (-0.8755948399394972 0.00825926594520543) (-0.8755948399394972 -0.2940985014512921) (0.08518168064943167 -0.2940985014512921) (0.08518168064943167 -0.2940985014512921))))
 
 (test-random "prog2-density"
   (run 1 (total-density q x)
-    (prog2-density total-density q x)
+    (prog2-density total-density (list x q))
     (prog2 q x))
   '((-2.528524373603396 -1.2269862731156183 -1.1740941342295155)))
 
@@ -345,21 +275,12 @@
     (fresh (x q)
       (== 1.0 x)
       (== 1.2 q)
-      (prog2-chain-c 10 x q ls)))
-  '(((1.0 1.2)
-     (2.0 1.2)
-     (2.0 1.2)
-     (2.0 1.2)
-     (2.0 1.5601195272144106)
-     (2.0 1.5601195272144106)
-     (2.0 3.648440896939161)
-     (2.0 3.648440896939161)
-     (2.0 2.8838541058847027)
-     (2.0 3.5762912355838488))))
+      (chain 10 (list x q) prog2-proposal-c prog2-density ls)))
+  '(((1.0 1.2) (1.0 1.2) (1.0 1.2) (2.0 1.2) (2.0 1.5601195272144106) (2.0 1.5601195272144106) (2.0 1.5601195272144106) (2.0 2.1663077911255897) (2.0 2.8838541058847027) (2.0 3.5762912355838488))))
 
-(test-random "prog2-density-c"
+(test-random "prog2-density"
   (run 1 (total-density q x)
-    (prog2-density-c total-density q x)
+    (prog2-density total-density (list x q))
     (prog2-c q x))
   '((-4.5271255844254235 0.8259058657704845 2.0)))
 
