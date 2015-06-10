@@ -1,5 +1,13 @@
 (load "mk.scm")
 
+(define-syntax printg
+  (syntax-rules ()
+    [(_ (x ...) e)
+     (project (x ...)
+       (begin
+         e
+         (== #f #f)))]))
+
 (define-syntax run1 (syntax-rules () ((_ (x) g0 g ...) (run 1 (x) g0 g ...))))
 (define-syntax run2 (syntax-rules () ((_ (x) g0 g ...) (run 2 (x) g0 g ...))))
 (define-syntax run3 (syntax-rules () ((_ (x) g0 g ...) (run 3 (x) g0 g ...))))
