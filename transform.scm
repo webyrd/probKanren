@@ -67,63 +67,67 @@
            (uniform 0.0 1.0 x)
            (== (list x) q)])))))
 
+
+
 (define prog4-proposal
-  (lambda (q b q^ b^)
-    (fresh (c1)
-      (flip 0.5 c1)
-      (conde
-        [(== #t c1) ;; resample b
-         (flip 0.5 b^)
-         (conde
-           [(== #t b^)
-            (fresh (c2 x^ y^)
-              (flip 0.5 c2)
-              (conde
-                [(== #t c2)
-                 (normal 0.0 1.0 x^)
+  (lambda (init-vars new-vars)
+    (fresh (b q b^ q^)
+      (== (list b q) init-vars)
+      (== (list b^ q^) new-vars)
+      (fresh (c1)
+        (flip 0.5 c1)
+        (conde
+          [(== #t c1) ;; resample b
+           (flip 0.5 b^)
+           (conde
+             [(== #t b^)
+              (fresh (c2 x^ y^)
+                (flip 0.5 c2)
+                (conde
+                  [(== #t c2)
+                   (normal 0.0 1.0 x^)
                  
-                 (conde
-                   [(== #t b) ; q is length 2
-                    (cadro q y^)]
-                   [(== #f b) ; q is length 1
-                    (normal 0.0 1.0 y^)])
+                   (conde
+                     [(== #t b)         ; q is length 2
+                      (cadro q y^)]
+                     [(== #f b)         ; q is length 1
+                      (normal 0.0 1.0 y^)])
                  
-                 (== (list x^ y^) q^)]
-                [(== #f c2)
-                 (normal 0.0 1.0 y^)
-                 (caro q x^)
-                 (== (list x^ y^) q^)]))]
-           [(== #f b^)
-            (fresh (x^)
-              (uniform 0.0 1.0 x^)
-              (== (list x^) q^))])]
+                   (== (list x^ y^) q^)]
+                  [(== #f c2)
+                   (normal 0.0 1.0 y^)
+                   (caro q x^)
+                   (== (list x^ y^) q^)]))]
+             [(== #f b^)
+              (fresh (x^)
+                (uniform 0.0 1.0 x^)
+                (== (list x^) q^))])]
 
-        [(== #f c1) ;; resample q
-         (== b b^)
-         (conde
-           [(== #t b)
-            (fresh (c2 x^ y^)
-              (flip 0.5 c2)
-              (conde
-                [(== #t c2)
-                 (normal 0.0 1.0 x^)
-                 (cadro q y^)
-                 (== (list x^ y^) q^)]
-                [(== #f c2)
-                 (uniform 0.0 1.0 y^)
-                 (caro q x^)
-                 (== (list x^ y^) q^)]))]
-           [(== #f b)
-            (fresh (x^)
-              (uniform 0.0 1.0 x^)
-              (== (list x^) q^))])]))))
-
-
+          [(== #f c1) ;; resample q
+           (== b b^)
+           (conde
+             [(== #t b)
+              (fresh (c2 x^ y^)
+                (flip 0.5 c2)
+                (conde
+                  [(== #t c2)
+                   (normal 0.0 1.0 x^)
+                   (cadro q y^)
+                   (== (list x^ y^) q^)]
+                  [(== #f c2)
+                   (uniform 0.0 1.0 y^)
+                   (caro q x^)
+                   (== (list x^ y^) q^)]))]
+             [(== #f b)
+              (fresh (x^)
+                (uniform 0.0 1.0 x^)
+                (== (list x^) q^))])])))))
 
 (define prog4-density
-  (lambda (total-density b q)
-    (fresh (db)
-      (flip-density b 0.5 db)      
+  (lambda (total-density vars)
+    (fresh (db b q)
+      (== (list b q) vars)
+      (flip-density b 0.5 db)     
       (fresh (dq dx dy)
 	(conde
           [(== b #t)
@@ -138,30 +142,7 @@
              (uniform-density a 0.0 1.0 dq))])
         (pluso db dq total-density)))))
 
-(define prog4-mh
-  (lambda (b q b^^ q^^ density-bq density-bq^)
-    (fresh (b^ q^ b1 ratio accept)
-      (prog4-proposal q b q^ b^)
-      (prog4-density density-bq  b  q )
-      (prog4-density density-bq^ b^ q^)
-      (/o density-bq^ density-bq ratio)
-      (mino 1.0 ratio accept)
-      (flip accept b1)
-      (conde
-        [(== b1 #t) (== b^ b^^) (== q^ q^^)]
-        [(== b1 #f) (== b  b^^) (== q  q^^)]))))
 
-(define prog4-chain
-  (lambda (len b q ls)
-    (conde
-      [(== 0 len) (== '() ls)]
-      [(== 1 len) (== (list (list b q)) ls)]
-      [(>o len 1 #t)
-       (fresh (d density-bq density-bq^ b^^ q^^ len-1)
-         (== `((,b ,q) . ,d) ls)
-         (prog4-mh b q b^^ q^^ density-bq density-bq^)
-         (minuso len 1 len-1)
-         (prog4-chain len-1 b^^ q^^ d))])))
 
 
 ;; TODO: after trying prog3 and prog4, write the program transformations
@@ -291,6 +272,42 @@
          (prog2-chain-c len-1 x^^ q^^ d))])))
 
 
+
+
+;;; general definitions of mh and chain
+
+(define mh
+  (lambda (init-vars new-vars
+      old-density new-density
+      proposal
+      density)
+    (fresh (candidate-vars b ratio accept)
+      (proposal init-vars candidate-vars)
+      (density old-density  init-vars)
+      (density new-density  candidate-vars)
+      (/o new-density old-density ratio)
+      (mino 1.0 ratio accept)
+      (flip accept b)
+      (conde
+        [(== b #t) (== candidate-vars new-vars)]
+        [(== b #f) (== init-vars new-vars)]))))
+
+(define chain
+  (lambda (len init-vars proposal density ls)
+    (conde
+      [(== 0 len) (== '() ls)]
+      [(== 1 len) (== (list init-vars) ls)]
+      [(>o len 1 #t)
+       (fresh (d old-density new-density new-vars len-1)
+         (== `(,init-vars . ,d) ls)
+         (mh init-vars new-vars old-density new-density proposal density)
+         (minuso len 1 len-1)
+         (chain len-1 new-vars proposal density d))])))
+
+
+
+
+
 (test-random "prog2-chain-1"
   (run 1 (ls)
     (fresh (x q)
@@ -344,7 +361,7 @@
     (fresh (b q)
       (== #f b)
       (== (list 0.7) q)
-      (prog4-chain 12 b q ls)))
+      (chain 12 (list b q) prog4-proposal prog4-density ls)))
   '(((#f (0.7))
      (#t (-0.31277647622571947 -2.011849077381663))
      (#f (0.33237604021746425))
