@@ -1,6 +1,7 @@
 (load "mk.scm")
 (load "mkdefs.scm")
 (load "delayed-goal-defs.scm")
+(load "utils.scm")
 (load "test-check.scm")
 
 ;; (define prog
