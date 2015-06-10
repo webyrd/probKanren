@@ -2,10 +2,12 @@
 
 (define-syntax printg
   (syntax-rules ()
-    [(_ (x ...) e)
+    [(_ (x ...) msg)
      (project (x ...)
        (begin
-         e
+         (printf "~a\n" msg)
+         (printf "~a: ~s\n" 'x x)
+         ...
          (== #f #f)))]))
 
 (define-syntax run1 (syntax-rules () ((_ (x) g0 g ...) (run 1 (x) g0 g ...))))
