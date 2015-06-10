@@ -57,71 +57,78 @@
       (flip 0.5 b)
       (fresh (x)
         (conde
-	 [(== #t b)
-	  (fresh (y)
-	    (normal 0.0 1.0 x)
-	    (normal 0.0 1.0 y)
-	    (== (list x y) q))]
-	 [(== #f b)
-	  (uniform 0.0 1.0 x)
-	  (== (list x) q)])))))
+          [(== #t b)
+           (fresh (y)
+             (normal 0.0 1.0 x)
+             (normal 0.0 1.0 y)
+             (== (list x y) q))]
+          [(== #f b)
+           (uniform 0.0 1.0 x)
+           (== (list x) q)])))))
 
 (define prog4-proposal
   (lambda (q b q^ b^)
     (fresh (c1)
       (flip 0.5 c1)
       (conde
-       [(== #t c1) ;; resample b
-	(flip 0.5 b^)
-	(conde
-	 [(== #t b^)
-	  (fresh (c2 x^ y^)
-	    (flip 0.5 c3)
-	    (conde
-	     [(== #t c2)
-	      (normal 0.0 1.0 x^)
-	      (== (cadr q) y^)
-	      (== (list x^ y^) q^)]
-	     [(== #f c2)
-	      (uniform 0.0 1.0 y^)
-	      (== (car q) x^)
-	      (== (list x^ y^) q^)]))]
-	 [(== #f b^)
-	  (fresh (x^)
-	    (uniform 0.0 1.0 x^)
-	    (== (list x^) q^))])
+        [(== #t c1) ;; resample b
+         (flip 0.5 b^)
+         (conde
+           [(== #t b^)
+            (fresh (c2 x^ y^)
+              (flip 0.5 c2)
+              (conde
+                [(== #t c2)
+                 (normal 0.0 1.0 x^)
+                 (cadro q y^)
+                 (== (list x^ y^) q^)]
+                [(== #f c2)
+                 (uniform 0.0 1.0 y^)
+                 (caro q x^)
+                 (== (list x^ y^) q^)]))]
+           [(== #f b^)
+            (fresh (x^)
+              (uniform 0.0 1.0 x^)
+              (== (list x^) q^))])]
 
-       [(== #f c1)
-	(== b b^)
-	(conde
-	 [(== #t b)
-	  (fresh (c2 x^ y^)
-	    (flip 0.5 c3)
-	    (conde
-	     [(== #t c2)
-	      (normal 0.0 1.0 x^)
-	      (== (cadr q) y^)
-	      (== (list x^ y^) q^)]
-	     [(== #f c2)
-	      (uniform 0.0 1.0 y^)
-	      (== (car q) x^)
-	      (== (list x^ y^) q^)]))]
-	 [(== #f b)
-	  (fresh (x^)
-	    (uniform 0.0 1.0 x^)
-	    (== (list x^) q^))])]]))))
-	    
+        [(== #f c1)
+         (== b b^)
+         (conde
+           [(== #t b)
+            (fresh (c2 x^ y^)
+              (flip 0.5 c3)
+              (conde
+                [(== #t c2)
+                 (normal 0.0 1.0 x^)
+                 (cadro q y^)
+                 (== (list x^ y^) q^)]
+                [(== #f c2)
+                 (uniform 0.0 1.0 y^)
+                 (caro q x^)
+                 (== (list x^ y^) q^)]))]
+           [(== #f b)
+            (fresh (x^)
+              (uniform 0.0 1.0 x^)
+              (== (list x^) q^))])]))))
+
+
+
 (define prog4-density
   (lambda (total-density b q)
     (fresh (db)
-      (flip-density b 0.5 db)
+      (flip-density b 0.5 db)      
       (fresh (dq dx dy)
 	(conde
           [(== b #t)
-	   (normal-density (car q)  0.0 1.0 dx)
-	   (normal-density (cadr q) 0.1 1.0 dy)
+           (fresh (a ad)
+             (== (list a ad) q)
+             (normal-density a  0.0 1.0 dx)
+             (normal-density ad 0.1 1.0 dy))
 	   (pluso dx dy dq)]
-          [(== b #f) (uniform-density (car q) 0.0 1.0 dq)])
+          [(== b #f)
+           (fresh (a)
+             (caro q a)
+             (uniform-density a 0.0 1.0 dq))])
         (pluso db dq total-density)))))
 
 (define prog4-mh
