@@ -96,7 +96,7 @@
          (conde
            [(== #t b)
             (fresh (c2 x^ y^)
-              (flip 0.5 c3)
+              (flip 0.5 c2)
               (conde
                 [(== #t c2)
                  (normal 0.0 1.0 x^)
