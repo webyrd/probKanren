@@ -109,9 +109,20 @@
 	 [(== #f b)
 	  (fresh (x^)
 	    (uniform 0.0 1.0 x^)
-	    (== (list x^) q^))])]))))
+	    (== (list x^) q^))])])))))
 	    
-	  
+(define prog4-density
+  (lambda (total-density b q)
+    (fresh (db)
+      (flip-density b 0.5 db)
+      (fresh (dq dx dy)
+	(conde
+          [(== b #t)
+	   (normal-density (car q)  0.0 1.0 dx)
+	   (normal-density (cadr q) 0.1 1.0 dy)
+	   (pluso dx dy dq)]
+          [(== b #f) (uniform-density (car q) 0.0 1.0 dq)])
+        (pluso db dq total-density)))))
 
 ;; TODO: after trying prog3 and prog4, write the program transformations
       
