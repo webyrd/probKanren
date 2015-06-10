@@ -224,9 +224,7 @@
       (flip accept b)
       (conde
         [(== b #t) (== candidate-vars new-vars)]
-        [(== b #f) (== init-vars new-vars)])
-      ;(printg (old-density new-density accept b) "densities and stuff  ")
-      )))
+        [(== b #f) (== init-vars new-vars)]))))
 
 (define chain
   (lambda (len init-vars proposal density ls)
