@@ -63,8 +63,8 @@
       (== (cons a d) p))))
 
 (define cadro
-  (lambda (x a)
-    (fresh (a ad dd)
+  (lambda (x ad)
+    (fresh (a dd)
       (== (cons a (cons ad dd)) x))))
 
 (define conso
