@@ -4,6 +4,8 @@
 (load "utils.scm")
 (load "test-check.scm")
 
+;;; prog1
+
 ;; (define prog
 ;;   (lambda (q)
 ;;     (fresh (x)
