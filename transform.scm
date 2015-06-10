@@ -15,7 +15,7 @@
 ;;     (density prog density-value)))
 
 
-;; TODO: Next example to try to hand-compile:
+
 (define prog3
   (lambda (x b)
     (fresh ()
@@ -25,33 +25,37 @@
         [(== #f b) (uniform 0.0 1.0 x)]))))
 
 (define prog3-proposal
-  (lambda (x b x^ b^)
-    (fresh (b1)
-      (flip 0.5 b1)
-      (conde
-        [(== b1 #t) ;; b1 is true resample the b in flip
-	 (flip 0.6 b^)
-	 (conde
-           [(== b^ #t) (== x x^)]
-           [(== b^ #f) (== x x^)])]
-        [(== b1 #f) ;; b1 is false resample whatever x is
-	 (conde     ;; so was x normal or uniform?
-           [(== b #t) (normal 0.0 1.0 x^) (== b b^)]
-           [(== b #f) (uniform 0.0 1.0 x^) (== b b^)])]
-        ))))
+  (lambda (init-vars new-vars)
+    (fresh (b x b^ x^)
+      (== (list b x) init-vars)
+      (== (list b^ x^) new-vars)
+      (fresh (b1)
+        (flip 0.5 b1)
+        (conde
+          [(== b1 #t) ;; b1 is true resample the b in flip
+           (flip 0.6 b^)
+           (conde
+             [(== b^ #t) (== x x^)]
+             [(== b^ #f) (== x x^)])]
+          [(== b1 #f) ;; b1 is false resample whatever x is
+           (conde     ;; so was x normal or uniform?
+             [(== b #t) (normal 0.0 1.0 x^) (== b b^)]
+             [(== b #f) (uniform 0.0 1.0 x^) (== b b^)])])))))
 
 (define prog3-density
-  (lambda (total-density b x)
-    (fresh (db)
-      (flip-density b 0.6 db)
-      (fresh (dx)
-	(conde
-          [(== b #t) (normal-density x 0.0 1.0 dx)]
-          [(== b #f) (uniform-density x 0.0 1.0 dx)])
-        (pluso db dx total-density)))))
+  (lambda (total-density vars)
+    (fresh (b x)
+      (== (list b x) vars)
+      (fresh (db)
+        (flip-density b 0.6 db)
+        (fresh (dx)
+          (conde
+            [(== b #t) (normal-density x 0.0 1.0 dx)]
+            [(== b #f) (uniform-density x 0.0 1.0 dx)])
+          (pluso db dx total-density))))))
 
 
-;; TODO: Another example to try to hand-compile:
+
 (define prog4
   (lambda (q b)
     (fresh ()
@@ -281,16 +285,19 @@
       old-density new-density
       proposal
       density)
-    (fresh (candidate-vars b ratio accept)
+    (fresh (candidate-vars b log-ratio ratio accept)
       (proposal init-vars candidate-vars)
       (density old-density  init-vars)
       (density new-density  candidate-vars)
-      (/o new-density old-density ratio)
+      (minuso new-density old-density log-ratio)
+      (expo log-ratio ratio)
       (mino 1.0 ratio accept)
       (flip accept b)
       (conde
         [(== b #t) (== candidate-vars new-vars)]
-        [(== b #f) (== init-vars new-vars)]))))
+        [(== b #f) (== init-vars new-vars)])
+      ;(printg (old-density new-density accept b) "densities and stuff  ")
+      )))
 
 (define chain
   (lambda (len init-vars proposal density ls)
@@ -355,6 +362,14 @@
     (prog2-density-c total-density q x)
     (prog2-c q x))
   '((-4.5271255844254235 0.8259058657704845 2.0)))
+
+(test-random "prog3-chain-1"
+  (run 1 (ls)
+    (fresh (b x)
+      (== #f b)
+      (== 0.7 x)
+      (chain 100 (list b x) prog3-proposal prog3-density ls)))
+  '???)
 
 (test-random "prog4-chain-1"
   (run 1 (ls)

@@ -213,3 +213,9 @@
     (delayed-goal `(,x ,y)
       (project (x y z)
         (== (min x y) z)))))
+
+(define expo
+  (lambda (x y)
+    (delayed-goal `(,x)
+      (project (x y)
+        (== (exp x) y)))))
