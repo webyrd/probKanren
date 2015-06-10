@@ -55,15 +55,16 @@
   (lambda (q b)
     (fresh ()
       (flip 0.5 b)
-      (conde
-        [(== #t b)
-         (fresh (y)
-           (normal 0.0 1.0 x)
-           (normal 0.0 1.0 y)
-           (== (list x y) q))]
-        [(== #f b)
-         (uniform 0.0 1.0 x)
-         (== (list x) q)]))))
+      (fresh (x)
+        (conde
+	 [(== #t b)
+	  (fresh (y)
+	    (normal 0.0 1.0 x)
+	    (normal 0.0 1.0 y)
+	    (== (list x y) q))]
+	 [(== #f b)
+	  (uniform 0.0 1.0 x)
+	  (== (list x) q)]))))
 
 (define prog4-proposal
   (lambda (q b q^ b^)
