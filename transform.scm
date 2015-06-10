@@ -64,24 +64,10 @@
         ;; conditioning!
         (== 2.0 x^)
 
-        ;; Super chobo hack, needed only when the conditioning value and
-        ;; the initial value are inconsistent:
-        (onceo
-         (fresh ()
-           alwayso
-           (flip 0.5 b)
-           (conde
-             [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
-             [(== b #f) (== x x^) (normal x 1.0 q^)])))
-
-        ;; If we insist the conditioning value and the initial value are
-        ;; consistent, we can use this code:
-        ;;
-        ;; (conde
-        ;;   [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
-        ;;   [(== b #f) (== x x^) (normal x 1.0 q^)])
-
-        ))))
+        (flip 0.5 b)
+        (conde
+          [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
+          [(== b #f) (== x x^) (normal x 1.0 q^)])))))
 
 
 ;;;
@@ -273,10 +259,10 @@
 (test-random "prog2-chain-1-c"
   (run 1 (ls)
     (fresh (x q)
-      (== 1.0 x)
+      (== 2.0 x) ; user's responsibility to pass in the correct value for the condition...
       (== 1.2 q)
       (chain 10 (list x q) prog2-proposal-c prog2-density ls)))
-  '(((1.0 1.2) (1.0 1.2) (1.0 1.2) (2.0 1.2) (2.0 1.5601195272144106) (2.0 1.5601195272144106) (2.0 1.5601195272144106) (2.0 2.1663077911255897) (2.0 2.8838541058847027) (2.0 3.5762912355838488))))
+  '(((2.0 1.2) (2.0 1.2) (2.0 1.2) (2.0 1.2) (2.0 1.2) (2.0 1.2) (2.0 1.9971409831526883) (2.0 2.584289087323319) (2.0 2.584289087323319) (2.0 2.8431895358811774))))
 
 (test-random "prog2-density"
   (run 1 (total-density q x)
