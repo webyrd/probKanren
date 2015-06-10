@@ -72,7 +72,25 @@
       (flip 0.5 c1)
       (conde
        [(== #t c1) ;; resample b
-	(flip 0.5 b^) (== q q^)]
+	(flip 0.5 b^)
+	(conde
+	 [(== #t b^)
+	  (fresh (c2 x^ y^)
+	    (flip 0.5 c3)
+	    (conde
+	     [(== #t c2)
+	      (normal 0.0 1.0 x^)
+	      (== (cadr q) y^)
+	      (== (list x^ y^) q^)]
+	     [(== #f c2)
+	      (uniform 0.0 1.0 y^)
+	      (== (car q) x^)
+	      (== (list x^ y^) q^)]))]
+	 [(== #f b^)
+	  (fresh (x^)
+	    (uniform 0.0 1.0 x^)
+	    (== (list x^) q^))])
+
        [(== #f c1)
 	(== b b^)
 	(conde
