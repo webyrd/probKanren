@@ -64,7 +64,7 @@
 	    (== (list x y) q))]
 	 [(== #f b)
 	  (uniform 0.0 1.0 x)
-	  (== (list x) q)]))))
+	  (== (list x) q)])))))
 
 (define prog4-proposal
   (lambda (q b q^ b^)
@@ -109,7 +109,7 @@
 	 [(== #f b)
 	  (fresh (x^)
 	    (uniform 0.0 1.0 x^)
-	    (== (list x^) q^))])])))))
+	    (== (list x^) q^))])]]))))
 	    
 (define prog4-density
   (lambda (total-density b q)
@@ -123,6 +123,32 @@
 	   (pluso dx dy dq)]
           [(== b #f) (uniform-density (car q) 0.0 1.0 dq)])
         (pluso db dq total-density)))))
+
+(define prog4-mh
+  (lambda (b q b^^ q^^ density-bq density-bq^)
+    (fresh (b^ q^ b1 ratio accept)
+      (prog4-proposal q b q^ b^)
+      (prog4-density density-bq  b  q )
+      (prog4-density density-bq^ b^ q^)
+      (/o density-bq^ density-bq ratio)
+      (mino 1.0 ratio accept)
+      (flip accept b1)
+      (conde
+        [(== b1 #t) (== b^ b^^) (== q^ q^^)]
+        [(== b1 #f) (== b  b^^) (== q  q^^)]))))
+
+(define prog4-chain
+  (lambda (len b q ls)
+    (conde
+      [(== 0 len) (== '() ls)]
+      [(== 1 len) (== (list (list b q)) ls)]
+      [(>o len 1 #t)
+       (fresh (d density-bq density-bq^ b^^ q^^ len-1)
+         (== `((,b ,q) . ,d) ls)
+         (prog4-mh b q b^^ q^^ density-bq density-bq^)
+         (minuso len 1 len-1)
+         (prog4-chain len-1 b^^ q^^ d))])))
+
 
 ;; TODO: after trying prog3 and prog4, write the program transformations
       
