@@ -324,3 +324,11 @@
     (prog2-density-c total-density q x)
     (prog2-c q x))
   '((-4.5271255844254235 0.8259058657704845 2.0)))
+
+(test-random "prog4-chain-1"
+  (run 1 (ls)
+    (fresh (b q)
+      (== #f b)
+      (== (list 0.7) q)
+      (prog4-chain 12 b q ls)))
+  '???)
