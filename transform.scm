@@ -40,9 +40,12 @@
     (fresh (x q)
       (== (list x q) vars)
       (fresh (dx dq)
-        (normal-density 0.0 1.0 x dx)
-        (normal-density x 1.0 q dq)
-        (sumo (list dq dx) total-density)))))
+        ;; original program body, with rp's changed to density relations
+        (fresh ()
+          (normal-density 0.0 1.0 x dx)
+          (normal-density x 1.0 q dq))
+        ;;
+        (sumo (list dx dq) total-density)))))
 
 
 
