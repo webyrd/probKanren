@@ -19,7 +19,7 @@
 ;;;
 
 (define prog2
-  (lambda (q x)
+  (lambda (x q)
     (fresh ()
       (normal 0.0 1.0 x)
       (normal x 1.0 q))))
@@ -74,7 +74,7 @@
 ;;;
 
 (define prog3
-  (lambda (x b)
+  (lambda (b x)
     (fresh ()
       (flip 0.6 b)
       (conde
@@ -114,7 +114,7 @@
 ;;;
 
 (define prog4
-  (lambda (q b)
+  (lambda (b q)
     (fresh ()
       (flip 0.5 b)
       (fresh (x)
@@ -253,7 +253,7 @@
 (test-random "prog2-density"
   (run 1 (total-density q x)
     (prog2-density total-density (list x q))
-    (prog2 q x))
+    (prog2 x q))
   '((-2.528524373603396 -1.2269862731156183 -1.1740941342295155)))
 
 (test-random "prog2-chain-1-c"
