@@ -4,17 +4,35 @@
 (load "utils.scm")
 (load "test-check.scm")
 
-;;; prog1
+;;;
 
-;; (define prog
-;;   (lambda (q)
-;;     (fresh (x)
-;;       (normal 0.0 1.0 x)
-;;       (normal x 1.0 q))))
+(define prog1
+  (lambda (q)
+    (fresh (x)
+      (normal 0.0 1.0 x)
+      (normal x 1.0 q))))
 
-;; (define importance
-;;   (lambda (prog density-value)
-;;     (density prog density-value)))
+(define prog1-proposal
+  (lambda (init-vars new-vars)
+    (fresh (x q x^ q^)  ;; 'x' has been lifted to top level
+      (== (list x q) init-vars)
+      (== (list x^ q^) new-vars)
+      (fresh (b)
+        (flip 0.5 b)
+        (conde
+          [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
+          [(== b #f) (== x x^) (normal x 1.0 q^)])))))
+
+(define prog1-density
+  (lambda (total-density vars)
+    (fresh (x q) ;; 'x' has been lifted to top level, so we can calculate density
+      (== (list x q) vars)
+      (fresh (dx dq)
+        (fresh ()
+          (normal-density 0.0 1.0 x dx)
+          (normal-density x 1.0 q dq))
+        (sumo (list dx dq) total-density)))))
+
 
 ;;;
 
@@ -243,7 +261,24 @@
 
 
 
+;;; TODO: implement importance sampler
+(define importance
+  (lambda (prog density-value)
+    (density prog density-value)))
+
+
+
 ;;; tests
+
+(test-random "prog1-chain-1"
+  (run 1 (ls)
+    (fresh (x q)
+      (== 1.0 x)
+      (== 1.2 q)
+      (chain 12 (list x q) prog1-proposal prog1-density ls)))
+  '(((1.0 1.2) (-0.8755948399394972 1.2) (-0.8755948399394972 -2.88744391732116) (-0.8755948399394972 -2.88744391732116) (-0.8755948399394972 -0.8784538567868089) (-0.8755948399394972 -0.2913057526161784) (-0.8755948399394972 -0.2913057526161784) (-0.8755948399394972 -1.4966988999433553) (-0.8755948399394972 0.00825926594520543) (-0.8755948399394972 -0.2940985014512921) (0.08518168064943167 -0.2940985014512921) (0.08518168064943167 -0.2940985014512921))))
+
+
 
 (test-random "prog2-chain-1"
   (run 1 (ls)
@@ -267,7 +302,7 @@
       (chain 10 (list x q) prog2-proposal-c prog2-density ls)))
   '(((2.0 1.2) (2.0 1.2) (2.0 1.2) (2.0 1.2) (2.0 1.2) (2.0 1.2) (2.0 1.9971409831526883) (2.0 2.584289087323319) (2.0 2.584289087323319) (2.0 2.8431895358811774))))
 
-(test-random "prog2-density"
+(test-random "prog2-density-c"
   (run 1 (total-density q x)
     (prog2-density total-density (list x q))
     (prog2-c q x))
