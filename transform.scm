@@ -28,9 +28,11 @@
     (fresh (x q) ;; 'x' has been lifted to top level, so we can calculate density
       (== (list x q) vars)
       (fresh (dx dq)
-        (fresh ()
+        ;;  original program body, with rp's changed to density relations and 'x' lifted
+        (fresh () ;; pulled the 'x' out of this fresh
           (normal-density 0.0 1.0 x dx)
           (normal-density x 1.0 q dq))
+        ;;
         (sumo (list dx dq) total-density)))))
 
 
@@ -125,12 +127,14 @@
     (fresh (b x)
       (== (list b x) vars)
       (fresh (db dx)
+        ;; original program body, with rp's changed to density relations
         (fresh ()
           (flip-density 0.6 b db)
           (conde
             [(== #t b) (normal-density 0.0 1.0 x dx)]
-            [(== #f b) (uniform-density 0.0 1.0 x dx)])
-          (sumo (list db dx) total-density))))))
+            [(== #f b) (uniform-density 0.0 1.0 x dx)]))
+        ;;
+        (sumo (list db dx) total-density)))))
 
 ;;;
 
