@@ -155,9 +155,10 @@
 
 (define prog4-proposal
   (lambda (init-vars new-vars)
-    (fresh (b q b^ q^)
-      (== (list b q) init-vars)
-      (== (list b^ q^) new-vars)
+    (fresh (b q x y
+            b^ q^ x^ y^)
+      (== (list b q x y) init-vars)
+      (== (list b^ q^ x^ y^) new-vars)
       (fresh (c1)
         (flip 0.5 c1)
         (conde
@@ -165,7 +166,7 @@
            (flip 0.5 b^)
            (conde
              [(== #t b^)
-              (fresh (c2 x^ y^)
+              (fresh (c2)
                 (flip 0.5 c2)
                 (conde
                   [(== #t c2)
@@ -183,7 +184,7 @@
                    (caro q x^)
                    (== (list x^ y^) q^)]))]
              [(== #f b^)
-              (fresh (x^)
+              (fresh ()
                 (uniform 0.0 1.0 x^)
                 (== (list x^) q^))])]
 
@@ -191,7 +192,7 @@
            (== b b^)
            (conde
              [(== #t b)
-              (fresh (c2 x^ y^)
+              (fresh (c2)
                 (flip 0.5 c2)
                 (conde
                   [(== #t c2)
@@ -203,33 +204,75 @@
                    (caro q x^)
                    (== (list x^ y^) q^)]))]
              [(== #f b)
-              (fresh (x^)
+              (fresh ()
                 (uniform 0.0 1.0 x^)
                 (== (list x^) q^))])])))))
 
 (define prog4-density
   (lambda (total-density vars)
-    (fresh (b q)
-      (== (list b q) vars)
+    (fresh (b q x y)
+      (== (list b q x y) vars)
       (fresh (db dq dx dy)
         ;;
         (fresh ()
           (flip-density 0.5 b db)
-          (conde
-            [(== b #t)
-             (fresh (x y)
-               (== (list x y) q)
-               (normal-density 0.0 1.0 x dx)
-               (normal-density 0.0 1.0 y dy))
-             (pluso dx dy dq)]
-            [(== b #f)
-             (fresh (x)
-               (caro q x)
-               (uniform-density 0.0 1.0 x dq))]))
+          (fresh () ;; lift 'x'
+            (conde
+              [(== #t b)
+               (fresh () ;; lift 'y'
+                 (normal-density 0.0 1.0 x dx)
+                 (normal-density 0.0 1.0 y dy)
+                 (== (list x y) q))]
+              [(== #f b)
+               (uniform-density 0.0 1.0 x dx)
+               (== (list x) q)
+               ;;
+               (== 0.0 dy) ;; since 'dy' isn't involved in this clause
+               ;;
+               ])))
         ;;
-        (sumo (list db dq) total-density)))))
+        (sumo (list db dx dy) total-density)))))
 
 ;;;
+
+(define geom
+  (lambda (p q)
+    (fresh (b)
+      (flip p b)
+      (conde
+        [(== #t b)
+         (== 0 q)]
+        [(== #f b)
+         (fresh (res)
+           (geom p res)
+           (pluso 1 res q))]))))
+
+(define geom-proposal
+  (lambda (init-vars new-vars)
+    '???))
+
+(define geom-density
+  (lambda (total-density vars)
+    (fresh (p q b)
+      (== (list p q b) vars)
+      (fresh (db)
+        ;;  original program body, with rp's changed to density relations
+        (fresh () ;; lifted 'b'
+          (flip-density p b db)
+          (conde
+            [(== #t b)
+             (== 0 q)
+
+             (sumo (list db) total-density)]
+            [(== #f b)
+             (fresh (res) ;; don't lift 'res', since it isn't from an rp
+               
+               ;; original call: (geom p res)
+               (geom-density total-density-res (list p res))
+               
+               (pluso 1 res q)
+
+               (sumo (list db total-density-res) total-density))]))))))
 
 
 
@@ -324,19 +367,19 @@
 
 (test-random "prog4-chain-1"
   (run 1 (ls)
-    (fresh (b q)
+    (fresh (b q x y)
       (== #f b)
       (== (list 0.7) q)
-      (chain 12 (list b q) prog4-proposal prog4-density ls)))
-  '(((#f (0.7))
-     (#f (0.7))
-     (#f (0.33237604021746425))
-     (#f (0.49624361083488844))
-     (#f (0.8177294233977477))
-     (#f (0.41107510704973493))
-     (#f (0.8762533555943044))
-     (#f (0.9344582655547984))
-     (#f (0.9344582655547984))
-     (#f (0.7661712866286206))
-     (#f (0.944030636116415))
-     (#f (0.766216211761046)))))
+      (chain 12 (list b q x y) prog4-proposal prog4-density ls)))
+  '(((#f (0.7) 0.7 _.0)
+     (#f (0.7) 0.7 _.0)
+     (#f (0.33237604021746425) 0.33237604021746425 _.1)
+     (#f (0.49624361083488844) 0.49624361083488844 _.2)
+     (#f (0.8177294233977477) 0.8177294233977477 _.3)
+     (#f (0.41107510704973493) 0.41107510704973493 _.4)
+     (#f (0.8762533555943044) 0.8762533555943044 _.5)
+     (#f (0.9344582655547984) 0.9344582655547984 _.6)
+     (#f (0.9344582655547984) 0.9344582655547984 _.6)
+     (#f (0.7661712866286206) 0.7661712866286206 _.7)
+     (#f (0.944030636116415) 0.944030636116415 _.8)
+     (#f (0.766216211761046) 0.766216211761046 _.9))))
