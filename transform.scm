@@ -209,9 +209,10 @@
 
 (define prog4-density
   (lambda (total-density vars)
-    (fresh (db b q)
+    (fresh (b q)
       (== (list b q) vars)
-      (fresh (dq dx dy)
+      (fresh (db dq dx dy)
+        ;;
         (fresh ()
           (flip-density 0.5 b db)
           (conde
@@ -224,8 +225,9 @@
             [(== b #f)
              (fresh (x)
                (caro q x)
-               (uniform-density 0.0 1.0 x dq))])
-          (sumo (list db dq) total-density))))))
+               (uniform-density 0.0 1.0 x dq))]))
+        ;;
+        (sumo (list db dq) total-density)))))
 
 ;;;
 
