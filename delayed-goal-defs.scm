@@ -64,7 +64,7 @@
                 (ext-rp-ls x `(uniform ,lo ,hi ,samp)))))))))
 
 (define uniform-density
-  (lambda (x lo hi dx)
+  (lambda (lo hi x dx)
     (delayed-goal `(,x ,lo ,hi)
       (project (x lo hi dx)
 	(== (if (and (>= x lo) (<= x hi))
@@ -104,7 +104,7 @@
                   (ext-rp-ls x `(flip ,p ,b))))))))))
 
 (define flip-density
-  (lambda (x p dx)
+  (lambda (p x dx)
     (delayed-goal `(,x ,p)
       (project (x p dx)
 	(== (log (if x p (- 1 p)))
@@ -148,7 +148,7 @@
                   (ext-rp-ls x `(normal ,mu ,sd ,val))))))))))
 
 (define normal-density
-  (lambda (x mu sd dx)
+  (lambda (mu sd x dx)
     (delayed-goal `(,x ,mu ,sd)
       (project (x mu sd dx)
         (let ((sq (lambda (x) (* x x))))
@@ -207,6 +207,12 @@
     (delayed-goal `(,x ,y)
       (project (x y z)
         (== (> x y) z)))))
+
+(define sumo
+  (lambda (lon y)
+    (delayed-goal lon
+      (project (lon y)
+        (== (apply + lon) y)))))
 
 (define mino
   (lambda (x y z)

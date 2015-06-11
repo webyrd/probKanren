@@ -39,11 +39,10 @@
   (lambda (total-density vars)
     (fresh (x q)
       (== (list x q) vars)
-      (fresh (dx)
-        (normal-density x 0.0 1.0 dx)
-        (fresh (dq)
-          (normal-density q x 1.0 dq)
-          (pluso dq dx total-density))))))
+      (fresh (dx dq)
+        (normal-density 0.0 1.0 x dx)
+        (normal-density x 1.0 q dq)
+        (sumo (list dq dx) total-density)))))
 
 
 
@@ -104,13 +103,13 @@
   (lambda (total-density vars)
     (fresh (b x)
       (== (list b x) vars)
-      (fresh (db)
-        (flip-density b 0.6 db)
-        (fresh (dx)
+      (fresh (db dx)
+        (fresh ()
+          (flip-density 0.6 b db)
           (conde
-            [(== b #t) (normal-density x 0.0 1.0 dx)]
-            [(== b #f) (uniform-density x 0.0 1.0 dx)])
-          (pluso db dx total-density))))))
+            [(== #t b) (normal-density 0.0 1.0 x dx)]
+            [(== #f b) (uniform-density 0.0 1.0 x dx)])
+          (sumo (list db dx) total-density))))))
 
 ;;;
 
@@ -187,20 +186,21 @@
   (lambda (total-density vars)
     (fresh (db b q)
       (== (list b q) vars)
-      (flip-density b 0.5 db)     
       (fresh (dq dx dy)
-	(conde
-          [(== b #t)
-           (fresh (a ad)
-             (== (list a ad) q)
-             (normal-density a  0.0 1.0 dx)
-             (normal-density ad 0.1 1.0 dy))
-	   (pluso dx dy dq)]
-          [(== b #f)
-           (fresh (a)
-             (caro q a)
-             (uniform-density a 0.0 1.0 dq))])
-        (pluso db dq total-density)))))
+        (fresh ()
+          (flip-density 0.5 b db)
+          (conde
+            [(== b #t)
+             (fresh (x y)
+               (== (list x y) q)
+               (normal-density 0.0 1.0 x dx)
+               (normal-density 0.0 1.0 y dy))
+             (pluso dx dy dq)]
+            [(== b #f)
+             (fresh (x)
+               (caro q x)
+               (uniform-density 0.0 1.0 x dq))])
+          (sumo (list db dq) total-density))))))
 
 ;;;
 
