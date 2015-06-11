@@ -4,6 +4,12 @@
 (load "utils.scm")
 (load "test-check.scm")
 
+;;; Working hypothesis:
+;;;
+;;; For density relations, only lift variables that are in the
+;;; 'output' position of an rp.
+
+
 ;;;
 
 (define prog1
@@ -253,9 +259,9 @@
 
 (define geom-density
   (lambda (total-density vars)
-    (fresh (p q b)
-      (== (list p q b) vars)
-      (fresh (db)
+    (fresh (p q b b*) ; have a list of b's (b . b*) from the trace...
+      (== (list p q (cons b b*)) vars)
+      (fresh (db total-density-res)
         ;;  original program body, with rp's changed to density relations
         (fresh () ;; lifted 'b'
           (flip-density p b db)
@@ -263,16 +269,20 @@
             [(== #t b)
              (== 0 q)
 
-             (sumo (list db) total-density)]
+             ;;
+             (== 0.0 total-density-res)
+             ;;
+             
+             ]
             [(== #f b)
              (fresh (res) ;; don't lift 'res', since it isn't from an rp
                
                ;; original call: (geom p res)
-               (geom-density total-density-res (list p res))
+               (geom-density total-density-res (list p res b*))
+               ;;
                
-               (pluso 1 res q)
-
-               (sumo (list db total-density-res) total-density))]))))))
+               (pluso 1 res q))]))
+        (sumo (list db total-density-res) total-density)))))
 
 
 
