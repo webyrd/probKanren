@@ -254,6 +254,7 @@
            (pluso 1 res q))]))))
 
 (define geom-proposal
+  ;; geom-proposal needs to look at the b's from the trace
   (lambda (init-vars new-vars)
     '???))
 
