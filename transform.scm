@@ -104,3 +104,59 @@
              [(== #t b) (normal-density 0.0 1.0 x dx)]
              [(== #f b) (uniform-density 0.0 1.0 x dx)]))
          (sumo (list db dx) total-density)))))
+
+
+'(define prog4
+   (lambda (b q)
+     (fresh ()
+       (flip 0.5 b)       
+       (fresh (x)
+         (conde
+           [(== #t b)
+            (fresh (y)
+              (normal 0.0 1.0 x)
+              (normal 0.0 1.0 y)
+              (== (list x y) q))]
+           [(== #f b)
+            (uniform 0.0 1.0 x)
+            (== (list x) q)])))))
+
+'(define prog4-lifted
+   (lambda (b q x y)
+     (fresh ()
+       (flip 0.5 b)
+       (fresh () ; lift x
+         (conde
+           [(== #t b)
+            (fresh () ; lift y
+              (normal 0.0 1.0 x)
+              (normal 0.0 1.0 y)
+              (== (list x y) q))]
+           [(== #f b)
+            (uniform 0.0 1.0 x)
+            (== (list x) q)])))))
+
+'(define prog4-density
+   (lambda (total-density vars)
+     (fresh (b q x y)
+       (== (list b q x y) vars)
+       (fresh (db dq dx dy)
+         ;;
+         (fresh ()
+           (flip-density 0.5 b db)
+           (fresh () ;; lift 'x'
+             (conde
+               [(== #t b)
+                (fresh () ;; lift 'y'
+                  (normal-density 0.0 1.0 x dx)
+                  (normal-density 0.0 1.0 y dy)
+                  (== (list x y) q))]
+               [(== #f b)
+                (uniform-density 0.0 1.0 x dx)
+                (== (list x) q)
+                ;;
+                (== 0.0 dy) ;; since 'dy' isn't involved in this clause
+                ;;
+                ])))
+         ;;
+         (sumo (list db dx dy) total-density)))))
