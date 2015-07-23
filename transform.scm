@@ -10,22 +10,6 @@
   (lambda (x ls)
     (cdr (assq x ls))))
 
-(define sumo-density
-  ;; like sumo, but not delayed, and assigns 0.0 to any unbound variable
-  (lambda (lon y)
-    (project (lon y)
-      (let loop ((lon lon)
-                 (sum 0.0))
-        (cond
-          [(null? lon) (== sum y)]
-          [(var? (car lon))
-           (fresh ()
-             (== (car lon) 0.0)
-             (loop (cdr lon) sum))]
-          [(number? (car lon))
-           (loop (cdr lon) (+ (car lon) sum))]
-          [else (error 'sumo-density "unknown value")])))))
-
 
 (define make-density-function
   ;; Takes a quoted expression representing a probKanren program.
@@ -56,7 +40,7 @@
                 (== (list ,@arg*) ,vars)
                 (fresh ,(map cdr var-map)
                   ,(make-density-body body var-map)
-                  (sumo-density (list ,@(map cdr var-map)) ,total-density))))))])))
+                  (sumo (list ,@(map cdr var-map)) ,total-density))))))])))
 
 (define make-density-body
   (lambda (body var-map)
@@ -95,7 +79,7 @@
          (fresh ()
            (normal-density 0.0 1.0 x dx)
            (normal-density x 1.0 q dq))
-         (sumo-density (list dx dq) total-density)))))
+         (sumo (list dx dq) total-density)))))
 
 
 ;; For prog3,
@@ -120,7 +104,7 @@
            (conde
              [(== #t b) (normal-density 0.0 1.0 x dx)]
              [(== #f b) (uniform-density 0.0 1.0 x dx)]))
-         (sumo-density (list db dx) total-density)))))
+         (sumo (list db dx) total-density)))))
 
 
 '(define prog4
@@ -172,4 +156,4 @@
                 (uniform-density 0.0 1.0 x dx)
                 (== (list x) q)])))
          ;;
-         (sumo-density (list db dq dx dy) total-density)))))
+         (sumo (list db dq dx dy) total-density)))))
