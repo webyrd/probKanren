@@ -18,8 +18,8 @@
   (lambda (prog)
     (match prog
       [(define ,name
-          (lambda ,arg*
-            ,body))
+         (lambda ,arg*
+           ,body))
        (let ((new-name
               (string->symbol
                (string-append
@@ -44,8 +44,15 @@
 (define make-density-body
   (lambda (body var-map)
     (match body
-      [(fresh ,args* ,[e*] ...)
-       `(fresh ,args* ,e* ...)]
+      [(== ,e1 ,e2) `(== ,e1 ,e2)]
+      [(fresh ,args* . ,e*)
+       `(fresh ,args* ,@(map (lambda (e) (make-density-body e var-map)) e*))]
+      [(conde . ,c*)
+       `(conde ,@(map (lambda (c)
+                        (map (lambda (g)
+                               (make-density-body g var-map))
+                             c))
+                      c*))]
       [(flip ,_ ,x)
        `(flip-density ,_ ,x ,(lookup x var-map))]
       [(normal ,_ ,__ ,x)
@@ -72,3 +79,28 @@
            (normal-density 0.0 1.0 x dx)
            (normal-density x 1.0 q dq))
          (sumo (list dx dq) total-density)))))
+
+
+;; For prog3,
+
+'(define prog3
+   (lambda (b x)
+     (fresh ()
+       (flip 0.6 b)
+       (conde
+         [(== #t b) (normal 0.0 1.0 x)]
+         [(== #f b) (uniform 0.0 1.0 x)]))))
+
+;; becomes
+
+'(define prog3-density
+   (lambda (total-density vars)
+     (fresh (b x)
+       (== (list b x) vars)
+       (fresh (db dx)
+         (fresh ()
+           (flip-density 0.6 b db)
+           (conde
+             [(== #t b) (normal-density 0.0 1.0 x dx)]
+             [(== #f b) (uniform-density 0.0 1.0 x dx)]))
+         (sumo (list db dx) total-density)))))
