@@ -1,3 +1,4 @@
+(load "transform.scm")
 (load "mk.scm")
 (load "mkdefs.scm")
 (load "delayed-goal-defs.scm")

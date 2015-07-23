@@ -10,6 +10,23 @@
   (lambda (x ls)
     (cdr (assq x ls))))
 
+(define sumo-density
+  ;; like sumo, but not delayed, and assigns 0.0 to any unbound variable
+  (lambda (lon y)
+    (project (lon y)
+      (let loop ((lon lon)
+                 (sum 0.0))
+        (cond
+          [(null? lon) (== sum y)]
+          [(var? (car lon))
+           (fresh ()
+             (== (car lon) 0.0)
+             (loop (cdr lon) sum))]
+          [(number? (car lon))
+           (loop (cdr lon) (+ (car lon) sum))]
+          [else (error 'sumo-density "unknown value")])))))
+
+
 (define make-density-function
   ;; Takes a quoted expression representing a probKanren program.
   ;;
@@ -39,7 +56,7 @@
                 (== (list ,@arg*) ,vars)
                 (fresh ,(map cdr var-map)
                   ,(make-density-body body var-map)
-                  (sumo (list ,@(map cdr var-map)) ,total-density))))))])))
+                  (sumo-density (list ,@(map cdr var-map)) ,total-density))))))])))
 
 (define make-density-body
   (lambda (body var-map)
@@ -78,7 +95,7 @@
          (fresh ()
            (normal-density 0.0 1.0 x dx)
            (normal-density x 1.0 q dq))
-         (sumo (list dx dq) total-density)))))
+         (sumo-density (list dx dq) total-density)))))
 
 
 ;; For prog3,
@@ -103,13 +120,13 @@
            (conde
              [(== #t b) (normal-density 0.0 1.0 x dx)]
              [(== #f b) (uniform-density 0.0 1.0 x dx)]))
-         (sumo (list db dx) total-density)))))
+         (sumo-density (list db dx) total-density)))))
 
 
 '(define prog4
    (lambda (b q)
      (fresh ()
-       (flip 0.5 b)       
+       (flip 0.5 b)
        (fresh (x)
          (conde
            [(== #t b)
@@ -153,10 +170,6 @@
                   (== (list x y) q))]
                [(== #f b)
                 (uniform-density 0.0 1.0 x dx)
-                (== (list x) q)
-                ;;
-                (== 0.0 dy) ;; since 'dy' isn't involved in this clause
-                ;;
-                ])))
+                (== (list x) q)])))
          ;;
-         (sumo (list db dx dy) total-density)))))
+         (sumo-density (list db dq dx dy) total-density)))))
