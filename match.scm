@@ -58,13 +58,6 @@
 ;; YOU'RE NOT ALLOWED TO REFER TO CATA VARS IN GUARDS. (reasonable!)
 
 #!chezscheme
-(library (Framework match)
-  (export
-    match match+ trace-match trace-match+ match-equality-test
-    with-ellipsis-aware-quasiquote
-    guard unquote ->)
-  (import (chezscheme))
-
 (define-syntax (-> x)
   (syntax-violation #f "misplaced aux keyword" x))
 
@@ -120,10 +113,7 @@
   (lambda (x)
     (syntax-case x ()
       ((_ Template Cata Obj ThreadedIds)
-       ;; RRN: Adding source locations:
-       #'(begin 
-	   ;(inspect #'Template)
-	   (errorf 'match "Unmatched datum.\n  Datum: ~s\n  Source Location: ~s\n" Obj #'Template)))
+       #'(errorf 'match "Unmatched datum: ~s" Obj))
       ((_ Template Cata Obj ThreadedIds (Pat B0 B ...) Rest ...)
        #'(convert-pat Pat
            (match-help1 Template Cata Obj ThreadedIds 
@@ -527,8 +517,7 @@
                           (lambda (x)
                             (syntax-case x ()
                               ((_ Foo) #'(my-backquote Foo))))])
-	     ;; RRN: Adding a new scope here for internal defines:
-	     (let () Exp ...)))])))
+             Exp ...))])))
 
 (define-syntax with-ellipsis-aware-quasiquote
   (lambda (x)
@@ -549,8 +538,7 @@
 
 (define-syntax letcc
   (syntax-rules ()
-    ;; RRN: changing this to a one-shot continuation:
-    ((_ V B0 B ...) (call/1cc (lambda (V) B0 B ...)))))
+    ((_ V B0 B ...) (call/cc (lambda (V) B0 B ...)))))
 
 (define classify-list
   (lambda (ls)
@@ -664,7 +652,6 @@
               (if (eqv? obj pat)
                   vals
                   (fail)))))))))
-)
 
 #!eof
 
@@ -793,10 +780,6 @@
 ;;; (parse '(program (set! x 3) (+ x 4)))) => (begin (set! x 3) (+ x 4))
 
 ;; CHANGELOG
-
-;; [January 2013] 
-;; RRN backported some changes from his WaveScope version of iu-match.
-;; See "RRN" tagged comments above.
 
 ;; [31 January 2010]
 ;; rkd replaced _ with k in the syntax-case patterns for match, match+,
