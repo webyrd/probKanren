@@ -267,6 +267,7 @@
           (flip-density p b db)
           (conde
             [(== #t b)
+             (== '() b*)
              (== 0 q)
 
              ;;
@@ -393,3 +394,24 @@
      (#f (0.7661712866286206) 0.7661712866286206 _.7)
      (#f (0.944030636116415) 0.944030636116415 _.8)
      (#f (0.766216211761046) 0.766216211761046 _.9))))
+
+(test-random "geom-density-1"
+  (run 1 (total-density q x b*)
+    (== 3 q)
+    (== 0.5 x)
+    (geom-density total-density (list x q b*)))
+  '((-2.772588722239781 3 0.5 (#f #f #f #t))))
+
+(test-random "geom-1"
+  ;; Because we are not conditioning on q, this query can diverge.
+  ;; This is because if geom-density associates q with 0, and
+  ;; geom associates q with 1, geom-density will then associate q with 1, 2, ...
+  ;; while geom is most likely to associate q with small values (mostly 0).
+  ;;
+  ;; The correct way to avoid this problem is to use chain, as in the
+  ;; other examples above.  This will require implementing geom-proposal.
+  (run 1 (total-density q x b*)
+    (== 0.5 x)
+    (geom-density total-density (list x q b*))
+    (geom x q))
+  '((-0.6931471805599453 0 0.5 (#t))))
