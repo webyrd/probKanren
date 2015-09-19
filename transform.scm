@@ -34,11 +34,11 @@
 (define lift-variable-body
   (lambda (body vars)
     (match body
-     [(fresh ,args* ,e*)
-      (let ((vars-body (lift-variable-body e* vars)))
-	(let ((new-vars (cdr vars-body))
-	      (new-e*   (car vars-body)))
-	  (cons `(fresh ,(diff args* new-vars) ,new-e*) new-vars)))]
+     [(fresh ,args* . ,e*)
+      (let ((vars-body (map (lambda (x) (lift-variable-body x vars)) e*)))
+	(let ((new-vars (apply append (map cdr vars-body)))
+	      (new-e*   (map car vars-body)))
+	  (cons `(fresh ,(diff args* new-vars) ,@new-e*) new-vars)))]
      [(normal ,_ ,__ ,x)
       (cons `(normal ,_ ,__ ,x) (cons x vars))]
      [(uniform ,_ ,__ ,x)
