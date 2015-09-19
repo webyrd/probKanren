@@ -4,6 +4,48 @@
 
 ;;; Transformation: quoted expression to quoted expression
 
+;;; Variable lifting
+
+(define diff
+  (lambda (l1 l2)
+    (cond
+     [(null? l1) '()]
+     [(member (car l1) l2) (diff (cdr l1) l2)]
+     [else (cons  (car l1) (diff (cdr l1) l2))])))
+
+(define lift-variable
+  (lambda (prog)
+    (match prog
+      [(define ,name
+	 (lambda ,arg*
+	   ,body))
+       (let ((new-name
+	      (string->symbol
+	       (string-append
+		(symbol->string name)
+		"-var-lifted")))
+	     (vars-body (lift-variable-body body '())))
+	 (let ((vars     (cdr vars-body))
+	       (new-body (car vars-body)))
+	   `(define ,new-name
+	      (lambda ,(append arg* vars)
+		,new-body))))])))
+
+(define lift-variable-body
+  (lambda (body vars)
+    (match body
+     [(fresh ,args* ,e*)
+      (let ((vars-body (lift-variable-body e* vars)))
+	(let ((new-vars (cdr vars-body))
+	      (new-e*   (car vars-body)))
+	  (cons `(fresh ,(diff args* new-vars) ,new-e*) new-vars)))]
+     [(normal ,_ ,__ ,x)
+      (cons `(normal ,_ ,__ ,x) (cons x vars))]
+     [(uniform ,_ ,__ ,x)
+      (cons `(uniform ,_ ,__ ,x) (cons x vars))]
+     [(flip ,_ ,x)
+      (cons `(flip ,_ ,x) (cons x vars))])))
+
 ;;; Density transformation
 
 (define lookup
