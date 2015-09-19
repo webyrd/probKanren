@@ -52,6 +52,7 @@
   (lambda (x ls)
     (cdr (assq x ls))))
 
+
 (define make-density-function
   ;; Takes a quoted expression representing a probKanren program.
   ;;
@@ -151,7 +152,7 @@
 '(define prog4
    (lambda (b q)
      (fresh ()
-       (flip 0.5 b)       
+       (flip 0.5 b)
        (fresh (x)
          (conde
            [(== #t b)
@@ -195,10 +196,7 @@
                   (== (list x y) q))]
                [(== #f b)
                 (uniform-density 0.0 1.0 x dx)
-                (== (list x) q)
-                ;;
-                (== 0.0 dy) ;; since 'dy' isn't involved in this clause
-                ;;
-                ])))
+                (== (list x) q)])))
          ;;
          (sumo (list db dx dy) total-density)))))
+
