@@ -34,6 +34,8 @@
 (define lift-variable-body
   (lambda (body vars)
     (match body
+     [(== ,e1 ,e2) 
+      (cons `(== ,e1 ,e2) vars)]
      [(fresh ,args* . ,e*)
       (let ((vars-body (map (lambda (x) (lift-variable-body x vars)) e*)))
 	(let ((new-vars (apply append (map cdr vars-body)))
