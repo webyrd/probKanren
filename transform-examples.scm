@@ -28,7 +28,7 @@
         (flip 0.5 b)
         (conde
           [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
-          [(== b #f) (== x x^) (normal x 1.0 q^)])))))
+          [(== b #f) (== x x^) (normal x^ 1.0 q^)])))))
 
 (define prog1-density
   (lambda (total-density vars)
@@ -453,3 +453,50 @@
      (lambda ()
        (fresh (x)
          (== #t x)))))
+
+(test "lift-4"
+  (lift-variable
+   '(define prog
+      (lambda ()
+        (fresh (x)
+          (normal 0.0 1.0 x)
+          (normal 0.0 2.0 x)))))
+  '(define prog-var-lifted
+     (lambda (x)
+       (fresh ()
+          (normal 0.0 1.0 x)
+          (normal 0.0 2.0 x)))))
+
+(test "lift-5"
+  (lift-variable
+   '(define prog
+      (lambda ()
+        (fresh ()
+          (fresh (x)
+            (normal 0.0 1.0 x))
+          (fresh (x)
+            (normal 0.0 2.0 x))))))
+  '(define prog-var-lifted
+     (lambda (x1 x2)
+       (fresh ()
+         (fresh ()
+           (normal 0.0 1.0 x1))
+         (fresh ()
+           (normal 0.0 2.0 x2))))))
+
+(test "lift-6"
+  (lift-variable
+   '(define prog
+      (lambda ()
+        (fresh ()
+          (fresh (x)
+            (normal 0.0 1.0 x))
+          (fresh (y)
+            (normal 0.0 2.0 y))))))
+  '(define prog-var-lifted
+     (lambda (x y)
+       (fresh ()
+         (fresh ()
+           (normal 0.0 1.0 x))
+         (fresh ()
+           (normal 0.0 2.0 y))))))
