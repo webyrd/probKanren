@@ -28,7 +28,7 @@
 	 (let ((vars     (cdr vars-body))
 	       (new-body (car vars-body)))
 	   `(define ,new-name
-	      (lambda ,(append arg* vars)
+	      (lambda ,(append (diff arg* vars) vars)
 		,new-body))))])))
 
 (define lift-variable-body
