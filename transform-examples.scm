@@ -417,3 +417,39 @@
     (geom-density total-density (list x q b*))
     (geom x q))
   '((-0.6931471805599453 0 0.5 (#t))))
+
+
+(test "lift-prog1"
+  (lift-variable
+   '(define prog1
+     (lambda (q)
+       (fresh (x)
+         (normal 0.0 1.0 x)
+         (normal x 1.0 q)))))
+  '(define prog1-var-lifted
+     (lambda (x q)
+       (fresh ()
+         (normal 0.0 1.0 x)
+         (normal x 1.0 q)))))
+
+(test "lift-2"
+  (lift-variable
+   '(define prog
+     (lambda ()
+       (fresh (x)
+         (normal 0.0 1.0 x)))))
+  '(define prog-var-lifted
+     (lambda (x)
+       (fresh ()
+         (normal 0.0 1.0 x)))))
+
+(test "lift-3"
+  (lift-variable
+   '(define prog
+      (lambda ()
+        (fresh (x)
+          (== #t x)))))
+  '(define prog-var-lifted
+     (lambda ()
+       (fresh (x)
+         (== #t x)))))

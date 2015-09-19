@@ -11,7 +11,7 @@
     (cond
      [(null? l1) '()]
      [(member (car l1) l2) (diff (cdr l1) l2)]
-     [else (cons  (car l1) (diff (cdr l1) l2))])))
+     [else (cons (car l1) (diff (cdr l1) l2))])))
 
 (define lift-variable
   (lambda (prog)
@@ -199,4 +199,3 @@
                 (== (list x) q)])))
          ;;
          (sumo (list db dx dy) total-density)))))
-
