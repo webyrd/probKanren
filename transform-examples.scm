@@ -11,6 +11,117 @@
 ;;; 'output' position of an rp.
 
 
+
+
+;;; The 'prog-double-x' example shows what happens when the same
+;;; variable ('x') appears in the last position in multiple rp's
+(define prog-double-x
+  (lambda ()
+    (fresh (x)
+      (normal 0.0 1.0 x)
+      (normal 0.0 2.0 x))))
+
+(define prog-double-x-var-lifted
+  (lambda (x1)
+    (fresh ()
+      (normal 0.0 1.0 x1)
+      (normal 0.0 2.0 x1))))
+
+(define prog-double-x-proposal
+  (lambda (init-vars new-vars)
+    (fresh (x1
+            x1^)
+      (== (list x1) init-vars)
+      (== (list x1^) new-vars)
+      (fresh (c2)
+        (categorical c2 '((1.0 a) (1.0 b)))
+        (conde
+          [(== 'a c2)
+           (fresh ()
+             (normal 0.0 1.0 x1^)
+             ;; (== x1 x1^)   better not perform this unification!
+             ;; if resampling x1^, better not unify x1^ with x1!
+             )]
+          [(== 'b c2)
+           (fresh ()
+             ;; (== x1 x1^)   better not perform this unification!
+             ;; if resampling x1^, better not unify x1^ with x1!
+             (normal 0.0 2.0 x1^))])))))
+
+(define prog-double-x-density
+  (lambda (total-density vars)
+    (fresh (x1)
+      (== (list x1) vars)
+      (fresh (dx1 dx2)
+        (fresh ()
+          (normal-density 0.0 1.0 x1 dx1)
+          (normal-density 0.0 2.0 x1 dx2))
+        (sumo (list dx1 dx2) total-density)))))
+
+
+
+
+;;; The 'prog0' examples demonstrates more than two rp's, and a non-rp
+;;; goal.
+(define prog0
+  (lambda (q)
+    (fresh (x y z)
+      (normal 0.0 1.0 x)
+      (normal x 1.0 y)
+      (pluso x y z)
+      (normal z 1.0 q))))
+
+(define prog0-var-lifted
+  (lambda (x1 y2 q3)
+    (fresh (z)      
+      (normal 0.0 1.0 x1)
+      (normal x1 1.0 y2)
+      (pluso x1 y2 z)
+      (normal z 1.0 q3))))
+
+(define prog0-proposal
+  (lambda (init-vars new-vars)
+    (fresh (x1 y2 q3
+            x1^ y2^ q3^)
+      (== (list x1 y2 q3) init-vars)
+      (== (list x1^ y2^ q3^) new-vars)
+      (fresh (c4)
+        (categorical c4 '((1.0 a) (1.0 b) (1.0 c)))
+        (conde
+          [(== 'a c4)
+           (fresh (z)
+             (normal 0.0 1.0 x1^)
+             (== y2 y2^)
+             (pluso x1^ y2^ z)
+             (== q3 q3^))]
+          [(== 'b c4)
+           (fresh (z)
+             (== x1 x1^)
+             (normal x1^ 1.0 y2^)
+             (pluso x1^ y2^ z)
+             (== q3 q3^))]
+          [(== 'c c4)
+           (fresh (z)
+             (== x1 x1^)
+             (== y2 y2^)
+             (pluso x1^ y2^ z)                          
+             (normal z 1.0 q3^))])))))
+
+(define prog0-density
+  (lambda (total-density vars)
+    (fresh (x1 y2 q3)
+      (== (list x1 y2 q3) vars)
+      (fresh (dx1 dy2 dq3)
+        (fresh (z)
+          (normal-density 0.0 1.0 x1 dx1)
+          (normal-density x1 1.0 y2 dy2)
+          (pluso x1 y2 z)
+          (normal-density z 1.0 q3 dq3))
+        (sumo (list dx1 dy2 dq3) total-density)))))
+
+
+
+
 ;;;
 
 (define prog1
@@ -18,6 +129,33 @@
     (fresh (x)
       (normal 0.0 1.0 x)
       (normal x 1.0 q))))
+
+(define prog1-var-lifted
+  (lambda (x1 q2)
+    (fresh ()
+      (normal 0.0 1.0 x1)
+      (normal x1 1.0 q2))))
+
+(define prog1-proposal
+  (lambda (init-vars new-vars)
+    (fresh (x1 q2 x1^ q2^)  ;; 'x' has been lifted to top level
+      (== (list x1 q2) init-vars)
+      (== (list x1^ q2^) new-vars)
+      (fresh (b3)
+        (flip 0.5 b3)
+        (conde
+          [(== b3 #t)
+           (fresh ()
+             (normal 0.0 1.0 x1^)
+             (== q2 q2^))]
+          [(== b3 #f)
+           (fresh ()
+             (== x1 x1^)
+             (normal x1 1.0 q2^))])))))
+
+
+
+
 
 (define prog1-proposal
   (lambda (init-vars new-vars)
