@@ -27,6 +27,8 @@
       (normal 0.0 1.0 x1)
       (normal 0.0 2.0 x1))))
 
+#|
+;;; categorial version
 (define prog-double-x-proposal
   (lambda (init-vars new-vars)
     (fresh (x1
@@ -43,6 +45,53 @@
              ;; if resampling x1^, better not unify x1^ with x1!
              )]
           [(== 'b c2)
+           (fresh ()
+             ;; (== x1 x1^)   better not perform this unification!
+             ;; if resampling x1^, better not unify x1^ with x1!
+             (normal 0.0 2.0 x1^))])))))
+|#
+
+#|
+;;; discrete-uniform version
+(define prog-double-x-proposal
+  (lambda (init-vars new-vars)
+    (fresh (x1
+            x1^)
+      (== (list x1) init-vars)
+      (== (list x1^) new-vars)
+      (fresh (c2)
+        (discrete-uniform 2 c2)
+        (conde
+          [(== 0 c2)
+           (fresh ()
+             (normal 0.0 1.0 x1^)
+             ;; (== x1 x1^)   better not perform this unification!
+             ;; if resampling x1^, better not unify x1^ with x1!
+             )]
+          [(== 1 c2)
+           (fresh ()
+             ;; (== x1 x1^)   better not perform this unification!
+             ;; if resampling x1^, better not unify x1^ with x1!
+             (normal 0.0 2.0 x1^))])))))
+|#
+
+(define prog-double-x-proposal
+  (lambda (init-vars new-vars)
+    (fresh (x1
+            x1^)
+      (== (list x1) init-vars)
+      (== (list x1^) new-vars)
+      (fresh (c2)
+        ; faking (discrete-uniform 2 c2)
+        (uniform 0 2 c2)
+        (conde
+          [(== 0 c2)
+           (fresh ()
+             (normal 0.0 1.0 x1^)
+             ;; (== x1 x1^)   better not perform this unification!
+             ;; if resampling x1^, better not unify x1^ with x1!
+             )]
+          [(== 1 c2)
            (fresh ()
              ;; (== x1 x1^)   better not perform this unification!
              ;; if resampling x1^, better not unify x1^ with x1!
@@ -79,6 +128,8 @@
       (pluso x1 y2 z)
       (normal z 1.0 q3))))
 
+#|
+;;; categorical version
 (define prog0-proposal
   (lambda (init-vars new-vars)
     (fresh (x1 y2 q3
@@ -101,6 +152,64 @@
              (pluso x1^ y2^ z)
              (== q3 q3^))]
           [(== 'c c4)
+           (fresh (z)
+             (== x1 x1^)
+             (== y2 y2^)
+             (pluso x1^ y2^ z)                          
+             (normal z 1.0 q3^))])))))
+|#
+
+(define prog0-proposal
+  (lambda (init-vars new-vars)
+    (fresh (x1 y2 q3
+            x1^ y2^ q3^)
+      (== (list x1 y2 q3) init-vars)
+      (== (list x1^ y2^ q3^) new-vars)
+      (fresh (c4)
+        (discrete-uniform 3 c2)
+        (conde
+          [(== 0 c4)
+           (fresh (z)
+             (normal 0.0 1.0 x1^)
+             (== y2 y2^)
+             (pluso x1^ y2^ z)
+             (== q3 q3^))]
+          [(== 1 c4)
+           (fresh (z)
+             (== x1 x1^)
+             (normal x1^ 1.0 y2^)
+             (pluso x1^ y2^ z)
+             (== q3 q3^))]
+          [(== 2 c4)
+           (fresh (z)
+             (== x1 x1^)
+             (== y2 y2^)
+             (pluso x1^ y2^ z)                          
+             (normal z 1.0 q3^))])))))
+
+(define prog0-proposal
+  (lambda (init-vars new-vars)
+    (fresh (x1 y2 q3
+            x1^ y2^ q3^)
+      (== (list x1 y2 q3) init-vars)
+      (== (list x1^ y2^ q3^) new-vars)
+      (fresh (c4)
+        ;; faking (discrete-uniform 3 c2)
+        (uniform 0 3 c2)
+        (conde
+          [(== 0 c4)
+           (fresh (z)
+             (normal 0.0 1.0 x1^)
+             (== y2 y2^)
+             (pluso x1^ y2^ z)
+             (== q3 q3^))]
+          [(== 1 c4)
+           (fresh (z)
+             (== x1 x1^)
+             (normal x1^ 1.0 y2^)
+             (pluso x1^ y2^ z)
+             (== q3 q3^))]
+          [(== 2 c4)
            (fresh (z)
              (== x1 x1^)
              (== y2 y2^)
