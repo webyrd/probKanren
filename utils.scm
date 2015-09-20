@@ -36,3 +36,11 @@
       [(null? l1) l2]
       [(member (car l1) l2) (union (cdr l1) l2)]
       [else (cons (car l1) (union (cdr l1) l2))])))
+
+
+
+(define map-append
+  (lambda (f ls)
+    (cond
+      [(null? ls) '()]
+      [else (append (f (car ls)) (map-append f (cdr ls)))])))

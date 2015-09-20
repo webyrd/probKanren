@@ -651,10 +651,8 @@
   '(define prog-var-lifted
      (lambda (x1 x2)
        (fresh ()
-         (fresh ()
-           (normal 0.0 1.0 x1))
-         (fresh ()
-           (normal 0.0 2.0 x2))))))
+         (normal 0.0 1.0 x1)
+         (normal 0.0 2.0 x2)))))
 
 (test "lift-6"
   (lift-variable
@@ -668,10 +666,8 @@
   '(define prog-var-lifted
      (lambda (x y)
        (fresh ()
-         (fresh ()
-           (normal 0.0 1.0 x))
-         (fresh ()
-           (normal 0.0 2.0 y))))))
+         (normal 0.0 1.0 x)
+         (normal 0.0 2.0 y)))))
 
 (test "lift-prog4"
   (lift-variable
@@ -693,15 +689,11 @@
      (lambda (q b y x)
        (fresh ()
          (flip 0.5 b)
-         (fresh ()
-           (conde
-             ((fresh ()
-                (== #t b)
-                (fresh ()
-                  (normal 0.0 1.0 x)
-                  (normal 0.0 1.0 y)
-                  (== (list x y) q))))
-             ((fresh ()
-                (== #f b)
-                (uniform 0.0 1.0 x)
-                (== (list x) q)))))))))
+         (conde
+           ((== #t b)
+            (normal 0.0 1.0 x)
+            (normal 0.0 1.0 y)
+            (== (list x y) q))
+           ((== #f b)
+            (uniform 0.0 1.0 x)
+            (== (list x) q)))))))

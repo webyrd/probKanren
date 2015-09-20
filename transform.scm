@@ -21,9 +21,15 @@
 	     (vars-body (lift-variable-body body '())))
 	 (let ((vars     (cdr vars-body))
 	       (new-body (car vars-body)))
-	   `(define ,new-name
-	      (lambda ,(append (diff arg* vars) vars)
-		,new-body))))])))
+           (let ((new-body (de-freshify new-body)))
+             (let ((new-body
+                    (match new-body
+                      [((fresh ,args . ,e*))
+                       `((fresh ,args . ,e*))]
+                      [,else `((fresh () ,@new-body))])))
+               `(define ,new-name
+                  (lambda ,(append (diff arg* vars) vars)
+                    ,@new-body))))))])))
 
 (define lift-variable-body
   (lambda (body vars)
@@ -46,6 +52,19 @@
        (cons `(uniform ,_ ,__ ,x) (cons x vars))]
       [(flip ,_ ,x)
        (cons `(flip ,_ ,x) (cons x vars))])))
+
+(define de-freshify
+  (lambda (body)
+    (match body
+      [(fresh () . ,e*) (map-append de-freshify e*)]
+      [(fresh ,args* . ,e*)
+       (let ((new-e* (map-append de-freshify e*)))
+         (list `(fresh ,args* . ,new-e*)))]
+      [(conde . ,c*)
+       (list `(conde . ,(map (lambda (c) (map-append de-freshify c)) c*)))]
+      [,else (list else)])))
+
+
 
 ;;; Density transformation
 

@@ -21,3 +21,12 @@
 (test "union*-3"
   (union* '((a b c) (a d c e) (a) () (c f g)))
   '(b d e a c f g))
+
+
+(test "map-1"
+  (map (lambda (x) (list x x)) '(1 2 3))
+  '((1 1) (2 2) (3 3)))
+
+(test "map-append-1"
+  (map-append (lambda (x) (list x x)) '(1 2 3))
+  '(1 1 2 2 3 3))
