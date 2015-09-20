@@ -287,6 +287,7 @@
 
 ;;;
 
+;;; The 'prog4' example test random variables that appear in only one branch of the conde.
 (define prog4
   (lambda (b q)
     (fresh ()
@@ -671,3 +672,36 @@
            (normal 0.0 1.0 x))
          (fresh ()
            (normal 0.0 2.0 y))))))
+
+(test "lift-prog4"
+  (lift-variable
+   '(define prog4
+      (lambda (b q)
+        (fresh ()
+          (flip 0.5 b)
+          (fresh (x)
+            (conde
+              [(== #t b)
+               (fresh (y)
+                 (normal 0.0 1.0 x)
+                 (normal 0.0 1.0 y)
+                 (== (list x y) q))]
+              [(== #f b)
+               (uniform 0.0 1.0 x)
+               (== (list x) q)]))))))
+  '(define prog4-var-lifted
+     (lambda (q b y x)
+       (fresh ()
+         (flip 0.5 b)
+         (fresh ()
+           (conde
+             ((fresh ()
+                (== #t b)
+                (fresh ()
+                  (normal 0.0 1.0 x)
+                  (normal 0.0 1.0 y)
+                  (== (list x y) q))))
+             ((fresh ()
+                (== #f b)
+                (uniform 0.0 1.0 x)
+                (== (list x) q)))))))))

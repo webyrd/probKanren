@@ -35,6 +35,11 @@
          (let ((new-vars (union* (map cdr vars-body)))
                (new-e*   (map car vars-body)))
            (cons `(fresh ,(diff args* new-vars) ,@new-e*) new-vars)))]
+      [(conde . ,c*)
+       (let ((vars-clauses (map (lambda (c) (lift-variable-body `(fresh () . ,c) vars)) c*)))
+         (let ((new-vars (union* (map cdr vars-clauses)))
+               (new-c* (map car vars-clauses)))
+           (cons `(conde . ,(map list new-c*)) new-vars)))]
       [(normal ,_ ,__ ,x)
        (cons `(normal ,_ ,__ ,x) (cons x vars))]
       [(uniform ,_ ,__ ,x)
