@@ -6,12 +6,6 @@
 
 ;;; Variable lifting
 
-(define diff
-  (lambda (l1 l2)
-    (cond
-     [(null? l1) '()]
-     [(member (car l1) l2) (diff (cdr l1) l2)]
-     [else (cons (car l1) (diff (cdr l1) l2))])))
 
 (define lift-variable
   (lambda (prog)
@@ -38,7 +32,7 @@
        (cons `(== ,e1 ,e2) vars)]
       [(fresh ,args* . ,e*)
        (let ((vars-body (map (lambda (x) (lift-variable-body x vars)) e*)))
-         (let ((new-vars (apply append (map cdr vars-body)))
+         (let ((new-vars (union* (map cdr vars-body)))
                (new-e*   (map car vars-body)))
            (cons `(fresh ,(diff args* new-vars) ,@new-e*) new-vars)))]
       [(normal ,_ ,__ ,x)
@@ -49,11 +43,6 @@
        (cons `(flip ,_ ,x) (cons x vars))])))
 
 ;;; Density transformation
-
-(define lookup
-  (lambda (x ls)
-    (cdr (assq x ls))))
-
 
 (define make-density-function
   ;; Takes a quoted expression representing a probKanren program.
