@@ -474,6 +474,35 @@
 
 ;;; tests
 
+(test-random "prog-double-x-density"
+  (run* (total-density)
+    (prog-double-x-density total-density (list 0.5)))
+  '(-2.6872742469692907))
+
+(test-random "prog-double-x-proposal"
+  (run 1 (q)
+    (prog-double-x-proposal '(0.5) q))
+  '((-3.4245136183523086)))
+
+(test-random "prog-double-x-chain-1"
+  (run 1 (ls)
+    (fresh (x)
+      (== 1.0 x)
+      (chain 12 (list x) prog-double-x-proposal prog-double-x-density ls)))
+  '(((1.0)
+     (1.0)
+     (1.0)
+     (1.0)
+     (-0.879760945571179)
+     (-0.8178679492620285)
+     (-0.8178679492620285)
+     (-0.522572176269937)
+     (-0.522572176269937)
+     (-0.38922204676677685)
+     (-0.38922204676677685)
+     (-0.38922204676677685))))
+
+
 (test-random "prog1-chain-1"
   (run 1 (ls)
     (fresh (x q)
