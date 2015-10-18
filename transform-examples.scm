@@ -471,7 +471,51 @@
 (define geom-proposal
   ;; geom-proposal needs to look at the b's from the trace
   (lambda (init-vars new-vars)
-    '???))
+    (fresh (q b res p
+            q^ b^ res^ p^)
+      (== (list q b res p) init-vars)
+      (== (list q^ b^ res^ p^) new-vars)
+      (fresh (choice)
+	(uniform 0 4 choice)
+	(conde
+	 [(== 0 choice)
+	  (fresh ()
+	    (== b b^)
+            (conde
+              [(== #t b^)
+	       (== 0 q^)]
+              [(== #f b^)
+	       (== res res^)
+	       (pluso 1 res^ q^)]))]
+	 [(== 1 choice)
+	  (fresh ()
+            (flip p^ b^)
+	    (conde
+              [(== #t b^)
+	       (== 0 q^)]
+              [(== #f b^)
+	       (== res res^)
+	       (pluso 1 res^ q^)]))]
+	 [(== 2 choice)
+	  (fresh ()
+	    (== b b^)
+	    (conde
+             [(== #t b^)
+	      (== 0 q^)]
+	     [(== #f b^)
+	      (geom-proposal p^ res^)
+	      (pluso 1 res^ q^)]))]
+	 [(== 3 choice)
+	  (fresh ()
+	   (== b b^)
+	   (conde
+	    [(== #t b^)
+	     (== 0 q^)]
+	    [(== #f b^)
+	     (== res res^)
+	     (pluso 1 res^ q)]))])))))
+
+
 
 (define geom-density
   (lambda (total-density vars)
