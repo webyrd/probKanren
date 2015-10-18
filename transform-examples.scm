@@ -461,12 +461,15 @@
            (pluso 1 res q))]))))
 
 (define geom-var-lifted
-  (lambda (q b res p)
+  (lambda (p q b res)
     (fresh ()
       (flip p b)
       (conde
         ((== #t b) (== 0 q))
-        ((== #f b) (geom-var-lifted p res) (pluso 1 res q))))))
+        ((== #f b)
+	 (fresh (b^ res^)
+	   (geom-var-lifted p res b^ res^)
+	   (pluso 1 res q)))))))
 
 (define geom-proposal
   ;; geom-proposal needs to look at the b's from the trace
