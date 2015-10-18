@@ -462,8 +462,16 @@
 
 (define geom-lifted
   ;; should res be lifted???
-  (lambda (? ??)
-    '???))
+  (lambda (p q b res)
+    (fresh ()
+      (flip p b)
+      (conde
+        [(== #t b)
+         (== 0 q)]
+        [(== #f b)
+         (fresh ()
+           (geom p res)
+           (pluso 1 res q))]))))
 
 (define geom-proposal
   ;; geom-proposal needs to look at the b's from the trace
