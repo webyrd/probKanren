@@ -7,6 +7,7 @@
 
 ;;; Single-site Proposal
 
+#|
 (define concat-to-symbol-name
   (lambda (sym str)
     (string->symbol
@@ -38,20 +39,20 @@
 		  (== `(list ,@init-vars) init-vars)
 		  (== `(list  ,@new-vars) new-vars)
 		  (fresh (choice) ; should be gensym'ed
-		    (uniform 0 ,num-vars)
+		    (uniform 0 ,num-vars choice)
 		    (conde
 		     ;; Concat better, still need the [(== 0 choice)]
 		     ,@new-bodys)))))))])))
 
 (define make-ss-proposal-body
   (lambda (body vars var-choice)
-    (let ((new-var (concat-to-symbol-name var-choice "^")))
-      (match body
-	[(normal ,mu ,sd ,var)
-	 (if (eq? var var-choice)
-	     `(normal ,mu ,sd ,new-var)
-	     `(== ,var ,new-var))]))))
-
+    (match body
+      [(normal ,mu ,sd ,var)
+       (let ((new-var (concat-to-symbol-name var "^")))
+         (if (eq? var var-choice)
+             `(normal ,mu ,sd ,new-var)
+             `(== ,var ,new-var)))])))
+|#
 
 
 ;;; Variable lifting
@@ -101,7 +102,9 @@
       [(uniform ,_ ,__ ,x)
        (cons `(uniform ,_ ,__ ,x) (cons x vars))]
       [(flip ,_ ,x)
-       (cons `(flip ,_ ,x) (cons x vars))])))
+       (cons `(flip ,_ ,x) (cons x vars))]
+      [(pluso ,_ ,__ ,___)
+       (cons `(pluso ,_ ,__ ,___) vars)])))
 
 (define de-freshify
   (lambda (body)

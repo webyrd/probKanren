@@ -75,7 +75,7 @@
 
 (define prog0-var-lifted
   (lambda (x1 y2 q3)
-    (fresh (z)      
+    (fresh (z)
       (normal 0.0 1.0 x1)
       (normal x1 1.0 y2)
       (pluso x1 y2 z)
@@ -87,28 +87,31 @@
             x1^ y2^ q3^)
       (== (list x1 y2 q3) init-vars)
       (== (list x1^ y2^ q3^) new-vars)
-      (fresh (c4)
-        ;; faking (discrete-uniform 3 c2)
-        ;; which is equivalent to (categorical c4 '((1.0 0) (1.0 1) (1.0 2)))
-        (uniform 0 3 c2)
+      (fresh (choice4)
+        ;; There are three init variables: x1 y2 q3
+        ;; We randomly chose one of these variables
+        ;; to resample.
+        ;; faking (discrete-uniform 3 c4)
+        ;; which is equivalent to (categorical c4 '((1.0 0) (1.0 1) (1.0 2)))        
+        (uniform 0 3 choice4)
         (conde
-          [(== 0 c4)
+          [(== 0 c4) ; here we resample x1
            (fresh (z)
              (normal 0.0 1.0 x1^)
              (== y2 y2^)
              (pluso x1^ y2^ z)
-             (== q3 q3^))]
-          [(== 1 c4)
+             (== q3 q3^))]          
+          [(== 1 choice4) ; here we resample y2
            (fresh (z)
              (== x1 x1^)
              (normal x1^ 1.0 y2^)
              (pluso x1^ y2^ z)
              (== q3 q3^))]
-          [(== 2 c4)
+          [(== 2 choice4) ; here we resample q3
            (fresh (z)
              (== x1 x1^)
              (== y2 y2^)
-             (pluso x1^ y2^ z)                          
+             (pluso x1^ y2^ z)
              (normal z 1.0 q3^))])))))
 
 (define prog0-density
@@ -145,14 +148,14 @@
     (fresh (x1 q2 x1^ q2^)  ;; 'x' has been lifted to top level
       (== (list x1 q2) init-vars)
       (== (list x1^ q2^) new-vars)
-      (fresh (b3)
-        (flip 0.5 b3)
+      (fresh (choice3)
+        (uniform 0 2 choice3)
         (conde
-          [(== b3 #t)
+          [(== 0 choice3)
            (fresh ()
              (normal 0.0 1.0 x1^)
              (== q2 q2^))]
-          [(== b3 #f)
+          [(== 1 choice3)
            (fresh ()
              (== x1 x1^)
              (normal x1 1.0 q2^))])))))
@@ -166,11 +169,11 @@
     (fresh (x q x^ q^)  ;; 'x' has been lifted to top level
       (== (list x q) init-vars)
       (== (list x^ q^) new-vars)
-      (fresh (b)
-        (flip 0.5 b)
+      (fresh (choice)
+        (uniform 0 2 choice)
         (conde
-          [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
-          [(== b #f) (== x x^) (normal x^ 1.0 q^)])))))
+          [(== 0 choice) (normal 0.0 1.0 x^) (== q q^)]
+          [(== 1 choice) (== x x^) (normal x^ 1.0 q^)])))))
 
 (define prog1-density
   (lambda (total-density vars)
@@ -193,16 +196,22 @@
       (normal 0.0 1.0 x)
       (normal x 1.0 q))))
 
+(define prog2-var-lifted
+  (lambda (x q)
+    (fresh ()
+      (normal 0.0 1.0 x)
+      (normal x 1.0 q))))
+
 (define prog2-proposal
   (lambda (init-vars new-vars)
     (fresh (x q x^ q^)
       (== (list x q) init-vars)
       (== (list x^ q^) new-vars)
-      (fresh (b)
-        (flip 0.5 b)
+      (fresh (choice)
+        (uniform 0 2 choice)
         (conde
-          [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
-          [(== b #f) (== x x^) (normal x 1.0 q^)])))))
+          [(== 0 choice) (normal 0.0 1.0 x^) (== q q^)]
+          [(== 1 choice) (== x x^) (normal x 1.0 q^)])))))
 
 (define prog2-density
   (lambda (total-density vars)
@@ -232,15 +241,15 @@
     (fresh (x q x^ q^)
       (== (list x q) init-vars)
       (== (list x^ q^) new-vars)
-      (fresh (b)
+      (fresh (choice)
 
         ;; conditioning!
         (== 2.0 x^)
 
-        (flip 0.5 b)
+        (uniform 0 2 choice)
         (conde
-          [(== b #t) (normal 0.0 1.0 x^) (== q q^)]
-          [(== b #f) (== x x^) (normal x 1.0 q^)])))))
+          [(== 0 choice) (normal 0.0 1.0 x^) (== q q^)]
+          [(== 1 choice) (== x x^) (normal x 1.0 q^)])))))
 
 
 ;;;
@@ -258,15 +267,15 @@
     (fresh (b x b^ x^)
       (== (list b x) init-vars)
       (== (list b^ x^) new-vars)
-      (fresh (b1)
-        (flip 0.5 b1)
+      (fresh (choice)
+        (uniform 0 2 choice)
         (conde
-          [(== b1 #t) ;; b1 is true resample the b in flip
+          [(== 0 choice) ;; resample the b in flip
            (flip 0.6 b^)
            (conde
              [(== b^ #t) (== x x^)]
              [(== b^ #f) (== x x^)])]
-          [(== b1 #f) ;; b1 is false resample whatever x is
+          [(== 1 choice) ;; resample whatever x is
            (conde     ;; so was x normal or uniform?
              [(== b #t) (normal 0.0 1.0 x^) (== b b^)]
              [(== b #f) (uniform 0.0 1.0 x^) (== b b^)])])))))
@@ -302,6 +311,60 @@
           [(== #f b)
            (uniform 0.0 1.0 x)
            (== (list x) q)])))))
+
+(define prog4-lifted
+  (lambda (b q x y)
+    (fresh ()
+      (flip 0.5 b)
+      (fresh () ; lift x
+        (conde
+          [(== #t b)
+           (fresh () ; lift y
+             (normal 0.0 1.0 x)
+             (normal 0.0 1.0 y)
+             (== (list x y) q))]
+          [(== #f b)
+           (uniform 0.0 1.0 x)
+           (== (list x) q)])))))
+
+(define prog4-proposal
+  (lambda (init-vars new-vars)
+    (fresh (b q x y
+            b^ q^ x^ y^)
+      (== (list b q x y) init-vars)
+      (== (list b^ q^ x^ y^) new-vars)
+      (fresh (choice)
+        (uniform 0 4 choice)
+        (conde
+          [(== 0 choice) ; here we resample b
+           (flip 0.5 b^)
+           (fresh ()
+             (conde
+               [(== #t b^)
+                (fresh ()
+                  (== x x^) ; (normal 0.0 1.0 x)
+
+;;                ;; Hmmm
+;;                (on-fresh (y)
+;;                  (normal 0.0 1.0 y))
+                  
+                  (== y y^) ; (normal 0.0 1.0 y)
+                  (== (list x^ y^) q^))]
+               [(== #f b^)
+                (== x x^) ; (uniform 0.0 1.0 x)
+                (== (list x^) q^)]))]
+          [(== 1 choice) ; here we resample q
+           ]
+          [(== 2 choice) ; here we resample x
+           ]
+          [(== 3 choice) ; here we resample y
+           ])))
+
+
+
+
+
+
 
 (define prog4-proposal
   (lambda (init-vars new-vars)
@@ -394,8 +457,13 @@
          (== 0 q)]
         [(== #f b)
          (fresh (res)
-           (geom p res)
+           (geom p res) ;; ?? should res be lifted?
            (pluso 1 res q))]))))
+
+(define geom-lifted
+  ;; should res be lifted???
+  (lambda (? ??)
+    '???))
 
 (define geom-proposal
   ;; geom-proposal needs to look at the b's from the trace
