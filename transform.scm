@@ -7,14 +7,14 @@
 
 ;;; Single-site Proposal
 
-#|
 (define concat-to-symbol-name
   (lambda (sym str)
     (string->symbol
      (string-append
-      (symbol->string s1)
+      (symbol->string sym)
       str))))
 
+#|
 (define make-ss-proposal
   (lambda (prog)
     (match prog
@@ -58,29 +58,39 @@
 ;;; Variable lifting
 
 
+(define rename-proc
+  ;; we are assuming gensyming has already been done!!!
+  (lambda (name new-name body)
+    (match body
+      [,x (guard (symbol? x))
+        (if (eq? x name)
+            new-name
+            x)]
+      [(,a . ,d)
+       (cons (rename-proc name new-name a)
+             (rename-proc name new-name d))]
+      [,else else])))
+
 (define lift-variable
   (lambda (prog)
     (match prog
       [(define ,name
 	 (lambda ,arg*
 	   ,body))
-       (let ((new-name
-	      (string->symbol
-	       (string-append
-		(symbol->string name)
-		"-var-lifted")))
-	     (vars-body (lift-variable-body body '())))
-	 (let ((vars     (cdr vars-body))
-	       (new-body (car vars-body)))
-           (let ((new-body (de-freshify new-body)))
-             (let ((new-body
-                    (match new-body
-                      [((fresh ,args . ,e*))
-                       `((fresh ,args . ,e*))]
-                      [,else `((fresh () ,@new-body))])))
-               `(define ,new-name
-                  (lambda ,(append (diff arg* vars) vars)
-                    ,@new-body))))))])))
+       (let ((new-name (concat-to-symbol-name name "-var-lifted")))
+         (let ((body (rename-proc name new-name body)))
+           (let ((vars-body (lift-variable-body body '())))
+             (let ((vars     (cdr vars-body))
+                   (new-body (car vars-body)))
+               (let ((new-body (de-freshify new-body)))
+                 (let ((new-body
+                        (match new-body
+                          [((fresh ,args . ,e*))
+                           `((fresh ,args . ,e*))]
+                          [,else `((fresh () ,@new-body))])))
+                   `(define ,new-name
+                      (lambda ,(append (diff arg* vars) vars)
+                        ,@new-body))))))))])))
 
 (define lift-variable-body
   (lambda (body vars)
@@ -98,13 +108,25 @@
                (new-c* (map car vars-clauses)))
            (cons `(conde . ,(map list new-c*)) new-vars)))]
       [(normal ,_ ,__ ,x)
-       (cons `(normal ,_ ,__ ,x) (cons x vars))]
+       (cons `(normal ,_ ,__ ,x) (union (list x) vars))]
       [(uniform ,_ ,__ ,x)
-       (cons `(uniform ,_ ,__ ,x) (cons x vars))]
+       (cons `(uniform ,_ ,__ ,x) (union (list x) vars))]
       [(flip ,_ ,x)
-       (cons `(flip ,_ ,x) (cons x vars))]
+       (cons `(flip ,_ ,x) (union (list x) vars))]
       [(pluso ,_ ,__ ,___)
-       (cons `(pluso ,_ ,__ ,___) vars)])))
+       (cons `(pluso ,_ ,__ ,___) vars)]
+      [(,proc . ,args) ; user-defined or unknown procedure call (including recursive call)
+       (letrec ((make-var-set (lambda (args)
+                                (let loop ((args args)
+                                           (vars '()))
+                                  (cond
+                                    [(null? args) vars]
+                                    [(symbol? (car args))
+                                     (if (memq (car args) vars)
+                                         (loop (cdr args) vars)
+                                         (loop (cdr args) (cons (car args) vars)))]
+                                    [else (loop (cdr args) vars)])))))
+         (cons `(,proc . ,args) (union (make-var-set args) vars)))])))
 
 (define de-freshify
   (lambda (body)

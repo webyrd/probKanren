@@ -457,21 +457,16 @@
          (== 0 q)]
         [(== #f b)
          (fresh (res)
-           (geom p res) ;; ?? should res be lifted?
+           (geom p res)
            (pluso 1 res q))]))))
 
-(define geom-lifted
-  ;; should res be lifted???
-  (lambda (p q b res)
+(define geom-var-lifted
+  (lambda (q b res p)
     (fresh ()
       (flip p b)
       (conde
-        [(== #t b)
-         (== 0 q)]
-        [(== #f b)
-         (fresh ()
-           (geom p res)
-           (pluso 1 res q))]))))
+        ((== #t b) (== 0 q))
+        ((== #f b) (geom-var-lifted p res) (pluso 1 res q))))))
 
 (define geom-proposal
   ;; geom-proposal needs to look at the b's from the trace
