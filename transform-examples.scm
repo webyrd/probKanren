@@ -87,6 +87,10 @@
             x1^ y2^ q3^)
       (== (list x1 y2 q3) init-vars)
       (== (list x1^ y2^ q3^) new-vars)
+
+      ;; Initialize
+      (prog0-var-lifted x1 y2 q3)
+
       (fresh (choice4)
         ;; There are three init variables: x1 y2 q3
         ;; We randomly chose one of these variables
@@ -148,6 +152,10 @@
     (fresh (x1 q2 x1^ q2^)  ;; 'x' has been lifted to top level
       (== (list x1 q2) init-vars)
       (== (list x1^ q2^) new-vars)
+
+      ;; Initialize
+      (prog1-var-lifted x1 q2)
+
       (fresh (choice3)
         (uniform 0 2 choice3)
         (conde
@@ -207,6 +215,10 @@
     (fresh (x q x^ q^)
       (== (list x q) init-vars)
       (== (list x^ q^) new-vars)
+
+      ;; Initialize
+      (prog2-var-lifted x q)
+
       (fresh (choice)
         (uniform 0 2 choice)
         (conde
@@ -262,11 +274,24 @@
         [(== #t b) (normal 0.0 1.0 x)]
         [(== #f b) (uniform 0.0 1.0 x)]))))
 
+(define prog3-var-lifted
+  (lambda (b x)
+    (fresh
+      ()
+      (flip 0.6 b)
+      (conde
+        ((== #t b) (normal 0.0 1.0 x))
+        ((== #f b) (uniform 0.0 1.0 x))))))
+
 (define prog3-proposal
   (lambda (init-vars new-vars)
     (fresh (b x b^ x^)
       (== (list b x) init-vars)
       (== (list b^ x^) new-vars)
+
+      ;; Initialize
+      (prog3-var-lifted b x)
+
       (fresh (choice)
         (uniform 0 2 choice)
         (conde
@@ -333,6 +358,7 @@
             b^ q^ x^ y^)
       (== (list b q x y) init-vars)
       (== (list b^ q^ x^ y^) new-vars)
+
       (fresh (choice)
         (uniform 0 4 choice)
         (conde
@@ -342,16 +368,19 @@
              (conde
                [(== #t b^)
                 (fresh ()
-                  (== x x^) ; (normal 0.0 1.0 x)
 
-;;                ;; Hmmm
-;;                (on-fresh (y)
-;;                  (normal 0.0 1.0 y))
+                  (== x x^)
+		  (normal 0.0 1.0 x)
                   
-                  (== y y^) ; (normal 0.0 1.0 y)
-                  (== (list x^ y^) q^))]
+                  (== y y^)
+		  (normal 0.0 1.0 y)
+                  
+		  (== (list x^ y^) q^))]
                [(== #f b^)
-                (== x x^) ; (uniform 0.0 1.0 x)
+
+                (== x x^)
+		(uniform 0.0 1.0 x)
+
                 (== (list x^) q^)]))]
           [(== 1 choice) ; here we resample q
            ]
@@ -468,8 +497,8 @@
         ((== #t b) (== 0 q))
         ((== #f b)
 	 (fresh (b^ res^)
-	   (geom-var-lifted p res b^ res^)
-	   (pluso 1 res q)))))))
+	   (geom-var-lifted p res b^ res^))
+	 (pluso 1 res q))))))
 
 (define geom-proposal
   ;; geom-proposal needs to look at the b's from the trace
@@ -484,10 +513,13 @@
 	 [(== 0 choice)
 	  (fresh ()
 	    (== b b^)
+            (flip p b)
             (conde
               [(== #t b^)
 	       (== 0 q^)]
               [(== #f b^)
+               (fresh (x y)
+		 (geom-var-lifted p res x y))
 	       (== res res^)
 	       (pluso 1 res^ q^)]))]
 	 [(== 1 choice)
@@ -498,25 +530,33 @@
 	       (== 0 q^)]
               [(== #f b^)
 	       (== res res^)
+	       (fresh (x y)
+		 (geom-var-lifted p res x y))
 	       (pluso 1 res^ q^)]))]
 	 [(== 2 choice)
 	  (fresh ()
 	    (== b b^)
+	    (flip p b)
 	    (conde
              [(== #t b^)
 	      (== 0 q^)]
 	     [(== #f b^)
-	      (fresh (x y)
+	       (fresh (x y)
+		(geom-var-lifted p res x y))
+	       (fresh (x y)
 	        (geom-var-lifted p^ res^ x y))
 	      (pluso 1 res^ q^)]))]
 	 [(== 3 choice)
 	  (fresh ()
 	   (== b b^)
+           (flip p b)
 	   (conde
 	    [(== #t b^)
 	     (== 0 q^)]
 	    [(== #f b^)
 	     (== res res^)
+	     (fresh (x y)
+	       (geom-var-lifted p res x y))
 	     (pluso 1 res^ q)]))])))))
 
 
