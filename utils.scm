@@ -1,3 +1,12 @@
+(define concat-to-symbol-name
+  (lambda (sym str)
+    (string->symbol
+     (string-append
+      (symbol->string sym)
+      str))))
+
+
+
 (define mean
   (lambda (ls)
     (exact->inexact (/ (apply + ls) (length ls)))))

@@ -6,53 +6,53 @@
 
 
 ;;; Single-site Proposal
-
-(define concat-to-symbol-name
-  (lambda (sym str)
-    (string->symbol
-     (string-append
-      (symbol->string sym)
-      str))))
-
-#|
 (define make-ss-proposal
   (lambda (prog)
     (match prog
       [(define ,name
-	 (lambda ,init-vars*
+	 (lambda ,init-vars
 	   ,body))
-       (let ((new-name
-	       (concat-to-symbol-name name) "-proposal")
+       (let ((new-name (concat-to-symbol-name name "-proposal"))
 	     (new-vars (map (lambda (s)
 			      (concat-to-symbol-name s "^"))
 			    init-vars))
 	     (num-vars (length init-vars)))
 	 (let ((new-bodys (map (lambda (i)
-				 (make-ss-proposal-body
-				   body
-				   init-vars
-				   (list-ref init-vars i)))
+                                 `[(== ,i choice)
+                                   ,(make-ss-proposal-body
+                                     body
+                                     init-vars
+                                     (list-ref init-vars i))])
 			       (iota num-vars))))
-	   `(define ,new-name
-	      (lambda (init-vars new-vars)
-		(fresh `(append ,init-vars ,new-vars)
-		  (== `(list ,@init-vars) init-vars)
-		  (== `(list  ,@new-vars) new-vars)
-		  (fresh (choice) ; should be gensym'ed
-		    (uniform 0 ,num-vars choice)
-		    (conde
-		     ;; Concat better, still need the [(== 0 choice)]
-		     ,@new-bodys)))))))])))
+           `(define ,new-name
+                (lambda (init-vars new-vars)
+                  (fresh ,(append init-vars new-vars)
+                    (== (list ,@init-vars) init-vars)
+                    (== (list ,@new-vars) new-vars)
+                    (fresh (choice)     ; should be gensym'ed
+                      (uniform 0 ,num-vars choice)
+                      ,@(de-freshify
+                         `(conde
+                            ;; Concat better, still need the [(== 0 choice)]
+                            ,@new-bodys))))))))])))
 
 (define make-ss-proposal-body
   (lambda (body vars var-choice)
     (match body
+      [(fresh ,x* . ,fresh-body*)
+       (let ((fresh-body* (map
+                           (lambda (fb)
+                             (make-ss-proposal-body fb vars var-choice))
+                           fresh-body*)))
+         `(fresh ,x* . ,fresh-body*))]
       [(normal ,mu ,sd ,var)
        (let ((new-var (concat-to-symbol-name var "^")))
          (if (eq? var var-choice)
              `(normal ,mu ,sd ,new-var)
-             `(== ,var ,new-var)))])))
-|#
+             `(fresh ()
+                (== ,var ,new-var)
+                (normal ,mu ,sd ,var))))])))
+
 
 
 ;;; Variable lifting

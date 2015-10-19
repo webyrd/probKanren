@@ -201,26 +201,22 @@
       (normal 0.0 1.0 x)
       (normal x 1.0 q))))
 
-(define prog2-proposal
+(define prog2-var-lifted-proposal
   (lambda (init-vars new-vars)
     (fresh (x q x^ q^)
       (== (list x q) init-vars)
       (== (list x^ q^) new-vars)
-
-      ;; Initialize
-      (prog2-var-lifted x q)
-
       (fresh (choice)
         (uniform 0 2 choice)
         (conde
-          [(== 0 choice)
-	   (normal 0.0 1.0 x^)
-	   (== q q^)
-	   (normal x 1.0 q)]
-          [(== 1 choice)
-	   (== x x^)
-	   (normal 0.0 1.0 x)
-	   (normal x 1.0 q^)])))))
+          ((== 0 choice)
+           (normal 0.0 1.0 x^)
+           (== q q^)
+           (normal x 1.0 q))
+          ((== 1 choice)
+           (== x x^)
+           (normal 0.0 1.0 x)
+           (normal x 1.0 q^)))))))
 
 (define prog2-density
   (lambda (total-density vars)
