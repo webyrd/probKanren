@@ -506,7 +506,8 @@
              [(== #t b^)
 	      (== 0 q^)]
 	     [(== #f b^)
-	      (geom-proposal p^ res^)
+	      (fresh (x y)
+	        (geom-var-lifted p^ res^ x y))
 	      (pluso 1 res^ q^)]))]
 	 [(== 3 choice)
 	  (fresh ()
