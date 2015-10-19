@@ -89,7 +89,7 @@
                            `((fresh ,args . ,e*))]
                           [,else `((fresh () ,@new-body))])))
                    `(define ,new-name
-                      (lambda ,(append (diff arg* vars) vars)
+                      (lambda ,(append arg* (diff vars arg*))
                         ,@new-body))))))))])))
 
 (define lift-variable-body
