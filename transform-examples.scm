@@ -15,6 +15,10 @@
 
 ;;; The 'prog-double-x' example shows what happens when the same
 ;;; variable ('x') appears in the last position in multiple rp's
+
+;; This program could mean (normal 0.0 1.0) or (normal 0.0 2.0)
+;; The implementation will pick for you
+;;
 (define prog-double-x
   (lambda ()
     (fresh (x)
