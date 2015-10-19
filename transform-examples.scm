@@ -546,9 +546,9 @@
       (conde
         ((== #t b) (== 0 q))
         ((== #f b)
-	 (fresh (b^ res^)
-	   (geom-var-lifted p res b^ res^))
-	 (pluso 1 res q))))))
+          (fresh (b$ res$)
+            (geom-var-lifted p res b$ res$))
+          (pluso 1 res q))))))
 
 (define geom-proposal
   ;; geom-proposal needs to look at the b's from the trace

@@ -60,15 +60,25 @@
 
 (define rename-proc
   ;; we are assuming gensyming has already been done!!!
-  (lambda (name new-name body)
+  (lambda (name new-name body additional-args)
     (match body
       [,x (guard (symbol? x))
-        (if (eq? x name)
-            new-name
-            x)]
+       (if (eq? x name)
+           new-name
+           x)]
+      [(,proc . ,args) (guard (eq? proc name))
+       (let ((additional-args (map (lambda (sym)
+                                     (concat-to-symbol-name sym "$"))
+                                   additional-args)))
+         (let ((new-args (append (map (lambda (arg)
+                                        (rename-proc name new-name arg additional-args))
+                                      args)
+                                 additional-args)))
+           `(fresh ,additional-args
+              (,new-name . ,new-args))))]
       [(,a . ,d)
-       (cons (rename-proc name new-name a)
-             (rename-proc name new-name d))]
+       (cons (rename-proc name new-name a additional-args)
+             (rename-proc name new-name d additional-args))]
       [,else else])))
 
 (define lift-variable
@@ -78,19 +88,21 @@
 	 (lambda ,arg*
 	   ,body))
        (let ((new-name (concat-to-symbol-name name "-var-lifted")))
-         (let ((body (rename-proc name new-name body)))
-           (let ((vars-body (lift-variable-body body '())))
-             (let ((vars     (cdr vars-body))
-                   (new-body (car vars-body)))
-               (let ((new-body (de-freshify new-body)))
-                 (let ((new-body
-                        (match new-body
-                          [((fresh ,args . ,e*))
-                           `((fresh ,args . ,e*))]
-                          [,else `((fresh () ,@new-body))])))
-                   `(define ,new-name
-                      (lambda ,(append arg* (diff vars arg*))
-                        ,@new-body))))))))])))
+         (let ((vars-body (lift-variable-body body '())))
+           (let ((vars     (cdr vars-body))
+                 (new-body (car vars-body)))
+             (let ((new-body (de-freshify new-body)))
+               (let ((new-body
+                      (match new-body
+                        [((fresh ,args . ,e*))
+                         `((fresh ,args . ,e*))]
+                        [,else `((fresh () ,@new-body))])))
+                 (let ((additional-args (diff vars arg*)))
+                   (let ((new-arg* (append arg* additional-args)))
+                     (let ((new-body (rename-proc name new-name new-body additional-args)))
+                       `(define ,new-name
+                          (lambda ,new-arg*
+                            ,@new-body))))))))))])))
 
 (define lift-variable-body
   (lambda (body vars)
