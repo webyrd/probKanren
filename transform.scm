@@ -48,7 +48,7 @@
       [(normal ,mu ,sd ,var)
        (let ((new-var (concat-to-symbol-name var "^"))
 	     (mu' (make-ss-proposal-body mu vars var-choice))
-	     (sd' (make-ss-proposal-body sd vars var-choice))
+	     (sd' (make-ss-proposal-body sd vars var-choice)))
          (if (eq? var var-choice)
              `(normal ,mu' ,sd' ,new-var)
              `(fresh ()
