@@ -45,6 +45,8 @@
                              (make-ss-proposal-body fb vars var-choice))
                            fresh-body*)))
          `(fresh ,x* . ,fresh-body*))]
+      [(== ,x ,y) `(== ,(make-ss-proposal-body x vars var-choice)
+		       ,(make-ss-proposal-body y vars var-choice))]
       [(normal ,mu ,sd ,var)
        (let ((new-var (concat-to-symbol-name var "^"))
 	     (mu' (make-ss-proposal-body mu vars var-choice))
